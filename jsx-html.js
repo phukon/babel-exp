@@ -1,30 +1,17 @@
-const traverse = require('@babel/traverse').default;
-const parser = require('@babel/parser');
+function isReactComponent(path) {
+  let isComponent = false;
+  const name = path.node.name;
 
-const code = `
-  const element = <div className="container">Hello World</div>;
-  const component = <MyComponent prop="value" />;
-`;
+  if (name?.type === 'JSXIdentifier') {
+    // console.log('♻ inside ')
+    const tagName = name.name;
 
-const ast = parser.parse(code, {
-  sourceType: "module",
-  plugins: ["jsx"]
-});
-
-
-traverse(ast, {
-  JSXElement(path) {
-    const openingElement = path.node.openingElement;
-    const name = openingElement.name;
-
-    if (name.type === 'JSXIdentifier') {
-      const tagName = name.name;
-      
-      if (tagName[0] === tagName[0].toUpperCase()) {
-        console.log('React Component:', tagName);
-      } else {
-        console.log('HTML Element:', tagName);
-      }
+    if (tagName[0] === tagName[0].toUpperCase()) {
+      console.log('Component: ', tagName);
+      isComponent = true;
     }
   }
-});
+  return isComponent;
+}
+
+module.exports = isReactComponent;

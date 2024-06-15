@@ -1,43 +1,7 @@
-const parser = require('@babel/parser');
-const traverse = require('@babel/traverse').default;
-const generate = require('@babel/generator').default;
 const types = require('@babel/types');
-const fs = require('fs');
-const path = require('path');
 
-// working code
-// creates a context with export delcaration
-
-const sourceCodeDir = './dump';
-const outputCodeDir = './dump';
-
-function traverseDirectory(dir) {
-  const files = fs.readdirSync(dir);
-  files.forEach((file) => {
-    const filePath = path.join(dir, file);
-    if (file === 'node_modules') {
-      // Ignore the node_modules directory
-      return;
-    }
-    if (fs.statSync(filePath).isDirectory()) {
-      traverseDirectory(filePath);
-    } else if (
-      path.extname(filePath) === '.jsx' ||
-      path.extname(filePath) === '.tsx'
-    ) {
-      processFile(filePath);
-    }
-  });
-}
-
-function processFile(filePath) {
-  const code = fs.readFileSync(filePath, 'utf-8');
-  const ast = parser.parse(code, {
-    sourceType: 'unambiguous',
-    plugins: ['jsx'],
-  });
-
-  const visitor = {
+module.exports = {
+  contextVisitor: {
     Program(path) {
       // Find the last import declaration
       // the body is an array, it traverses from below
@@ -145,29 +109,5 @@ function processFile(filePath) {
         );
       }
     },
-  };
-
-  // Traverse the AST with the visitor
-  traverse(ast, visitor);
-  const { code: modifiedCode } = generate(ast);
-  console.log(modifiedCode);
-
-  const outputFilePath = path.join(
-    outputCodeDir,
-    path.relative(sourceCodeDir, filePath)
-  );
-
-  // Ensure the output directory exists
-  const outputDirPath = path.dirname(outputFilePath);
-  if (!fs.existsSync(outputDirPath)) {
-    fs.mkdirSync(outputDirPath, { recursive: true });
-  }
-
-  fs.writeFileSync(outputFilePath, modifiedCode);
-  console.log(`Processed: ${filePath}`);
-}
-
-// Generate the modified code
-
-// console.log(modifiedCode);
-traverseDirectory(sourceCodeDir);
+  },
+};
