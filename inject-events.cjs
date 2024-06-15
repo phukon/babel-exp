@@ -5,7 +5,7 @@ const traverse = require('@babel/traverse').default;
 const generate = require('@babel/generator').default;
 const types = require('@babel/types');
 const isReactComponent = require('./jsx-html.js');
-const { contextVisitor } = require('./working/create-context-provider.js');
+const createContextVisitor = require('./working/create-context-provider.js');
 
 const sourceCodeDir = './dump';
 const outputCodeDir = './dump';
@@ -75,13 +75,24 @@ function processFile(filePath) {
           );
           // console.log('🚚');
           if (isReactComponent(jsxOpeningElement)) {
-            // console.log('its a react component!🍎');
-
+            console.log('its a react component!🍎');
+            // if (iterateEvents.length > 0) {
+            //   console.log('ie', iterateEvents)
+            //   iterateEvents = JSON.parse(atob(iterateEvents[0].value.value));
+            // }
+            // iterateEvents.push({
+            //   name: eventName,
+            //   attributes: eventAttributes,
+            // });
+            // const dataIterateEvents = types.jsxAttribute(
+            //   types.jsxIdentifier('injected_events'),
+            //   types.stringLiteral(btoa(JSON.stringify(iterateEvents)))
+            // );
+            let contextVisitor = createContextVisitor('lol1', 'lol');
             traverse(ast, contextVisitor);
             /**
              * TODO:
-             * - write and export context
-             * - write provider
+             * - write provider -> factory function
              * - wrap provider around the target element, or in this case this React JSX Element
              * - logic for locating the React component in the whole codebase
              *

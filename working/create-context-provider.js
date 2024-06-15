@@ -1,10 +1,9 @@
 const types = require('@babel/types');
 
-module.exports = {
-  contextVisitor: {
+function createContextVisitor(iterateId, iterateAttribute) {
+  return {
     Program(path) {
       // Find the last import declaration
-      // the body is an array, it traverses from below
       const lastImport = path.node.body.reduceRight((foundNode, node) => {
         return foundNode || (types.isImportDeclaration(node) ? node : null);
       }, null);
@@ -54,11 +53,11 @@ module.exports = {
                   types.variableDeclaration('const', [
                     types.variableDeclarator(
                       types.identifier('iterateId'),
-                      types.stringLiteral('lol1')
+                      types.stringLiteral(iterateId)
                     ),
                     types.variableDeclarator(
                       types.identifier('iterateAttribute'),
-                      types.stringLiteral('lol2')
+                      types.stringLiteral(iterateAttribute)
                     ),
                   ]),
                   types.returnStatement(
@@ -109,5 +108,7 @@ module.exports = {
         );
       }
     },
-  },
-};
+  };
+}
+
+module.exports = createContextVisitor;
