@@ -6,6 +6,7 @@ const generate = require('@babel/generator').default;
 const types = require('@babel/types');
 const isReactComponent = require('./jsx-html.js');
 const createContextVisitor = require('./working/create-context-provider.js');
+const { providerWrapperVisitor } = require('./provider-wrapper.js');
 
 const sourceCodeDir = './dump';
 const outputCodeDir = './dump';
@@ -76,45 +77,50 @@ function processFile(filePath) {
           // console.log('🚚');
           if (isReactComponent(jsxOpeningElement)) {
             console.log('its a react component!🍎');
-            // if (iterateEvents.length > 0) {
-            //   console.log('ie', iterateEvents)
-            //   iterateEvents = JSON.parse(atob(iterateEvents[0].value.value));
-            // }
-            // iterateEvents.push({
-            //   name: eventName,
-            //   attributes: eventAttributes,
-            // });
-            // const dataIterateEvents = types.jsxAttribute(
-            //   types.jsxIdentifier('injected_events'),
-            //   types.stringLiteral(btoa(JSON.stringify(iterateEvents)))
-            // );
-            let contextVisitor = createContextVisitor('lol1', 'lol');
+            if (iterateEvents.length > 0) {
+              iterateEvents = JSON.parse(atob(iterateEvents[0].value.value));
+            }
+            iterateEvents.push({
+              name: eventName,
+              attributes: eventAttributes,
+            });
+
+            let contextVisitor = createContextVisitor(
+              btoa(JSON.stringify(iterateEvents)),
+              'lol'
+            );
+
             traverse(ast, contextVisitor);
+            traverse(ast, providerWrapperVisitor);
             /**
              * TODO:
-             * - write provider -> factory function
-             * - wrap provider around the target element, or in this case this React JSX Element
+             * - import clashes
              * - logic for locating the React component in the whole codebase
-             *
+             * - import the created context
+             * - use the created context
+             * - set attribute using the values from the context
              */
-          }
-
-          if (iterateEvents.length > 0) {
-            iterateEvents = JSON.parse(atob(iterateEvents[0].value.value));
-          }
-          iterateEvents.push({ name: eventName, attributes: eventAttributes });
-          const dataIterateEvents = types.jsxAttribute(
-            types.jsxIdentifier('injected_events'),
-            types.stringLiteral(btoa(JSON.stringify(iterateEvents)))
-          );
-          attributes.map((attr, index) => {
-            if (attr.name.name === 'injected_events') {
-              attributes.splice(index, 1);
-              console.log('Removed iterate-event-names');
+          } else {
+            if (iterateEvents.length > 0) {
+              iterateEvents = JSON.parse(atob(iterateEvents[0].value.value));
             }
-          });
+            iterateEvents.push({
+              name: eventName,
+              attributes: eventAttributes,
+            });
+            const dataIterateEvents = types.jsxAttribute(
+              types.jsxIdentifier('injected_events'),
+              types.stringLiteral(btoa(JSON.stringify(iterateEvents)))
+            );
+            attributes.map((attr, index) => {
+              if (attr.name.name === 'injected_events') {
+                attributes.splice(index, 1);
+                console.log('Removed iterate-event-names');
+              }
+            });
 
-          attributes.push(dataIterateEvents);
+            attributes.push(dataIterateEvents);
+          }
         }
       }
     },

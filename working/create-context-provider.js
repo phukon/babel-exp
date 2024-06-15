@@ -20,10 +20,9 @@ function createContextVisitor(iterateId, iterateAttribute) {
           types.stringLiteral('react')
         );
 
-        // Insert the import declaration at the beginning of the file
         path.node.body.unshift(importDeclaration);
 
-        // Create the new line
+
         const newLine = types.exportNamedDeclaration(
           types.variableDeclaration('const', [
             types.variableDeclarator(
@@ -35,14 +34,12 @@ function createContextVisitor(iterateId, iterateAttribute) {
           ])
         );
 
-        // Insert the new line after the last import declaration
         path.node.body.splice(
           path.node.body.indexOf(lastImport) + 1,
           0,
           newLine
         );
 
-        // Create the IterateProvider component
         const iterateProvider = types.exportNamedDeclaration(
           types.variableDeclaration('const', [
             types.variableDeclarator(
@@ -100,7 +97,6 @@ function createContextVisitor(iterateId, iterateAttribute) {
           ])
         );
 
-        // Insert the IterateProvider component after the IterateContext declaration
         path.node.body.splice(
           path.node.body.indexOf(newLine) + 1,
           0,
