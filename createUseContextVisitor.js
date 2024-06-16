@@ -1,6 +1,6 @@
 const types = require('@babel/types');
 
-function createContextVisitor(iterateInjectedEvents, iterateId) {
+function createUseContextVisitor(importDir, targetDir) {
   return {
     Program(path) {
       // Find the last import declaration
@@ -9,12 +9,11 @@ function createContextVisitor(iterateInjectedEvents, iterateId) {
       }, null);
 
       if (lastImport) {
-        // Create the import declaration
         const importDeclaration = types.importDeclaration(
           [
             types.importSpecifier(
-              types.identifier('createContext'),
-              types.identifier('createContext')
+              types.identifier('useContext'),
+              types.identifier('useContext')
             ),
           ],
           types.stringLiteral('react')
@@ -22,21 +21,44 @@ function createContextVisitor(iterateInjectedEvents, iterateId) {
 
         path.node.body.unshift(importDeclaration);
 
-        const newLine = types.exportNamedDeclaration(
-          types.variableDeclaration('const', [
-            types.variableDeclarator(
+        const importIterateContext = types.importDeclaration(
+          [
+            types.importSpecifier(
               types.identifier('IterateContext'),
-              types.callExpression(types.identifier('createContext'), [
-                types.nullLiteral(),
-              ])
+              types.identifier('IterateContext')
             ),
-          ])
+          ],
+          types.stringLiteral(importDir)
         );
+
+        path.node.body.unshift(importIterateContext);
+
+        const useContextLine = types.variableDeclaration('const', [
+          types.variableDeclarator(
+            types.objectPattern([
+              types.objectProperty(
+                types.identifier('iterateId'),
+                types.identifier('iterateId'),
+                false,
+                true
+              ),
+              types.objectProperty(
+                types.identifier('iterateInjectedEvents'),
+                types.identifier('iterateInjectedEvents'),
+                false,
+                true
+              ),
+            ]),
+            types.callExpression(types.identifier('useContext'), [
+              types.identifier('IterateContext'),
+            ])
+          ),
+        ]);
 
         path.node.body.splice(
           path.node.body.indexOf(lastImport) + 1,
           0,
-          newLine
+          useContextLine
         );
 
         const iterateProvider = types.exportNamedDeclaration(
@@ -48,12 +70,12 @@ function createContextVisitor(iterateInjectedEvents, iterateId) {
                 types.blockStatement([
                   types.variableDeclaration('const', [
                     types.variableDeclarator(
-                      types.identifier('iterateInjectedEvents'),
-                      types.stringLiteral(iterateInjectedEvents)
+                      types.identifier('iterateId'),
+                      types.stringLiteral('iterateId')
                     ),
                     types.variableDeclarator(
-                      types.identifier('iterateId'),
-                      types.stringLiteral(iterateId)
+                      types.identifier('iterateAttribute'),
+                      types.stringLiteral('iterateAttribute')
                     ),
                   ]),
                   types.returnStatement(
@@ -70,8 +92,8 @@ function createContextVisitor(iterateInjectedEvents, iterateId) {
                                   types.identifier('iterateId')
                                 ),
                                 types.objectProperty(
-                                  types.identifier('iterateInjectedEvents'),
-                                  types.identifier('iterateInjectedEvents')
+                                  types.identifier('iterateAttribute'),
+                                  types.identifier('iterateAttribute')
                                 ),
                               ])
                             )
@@ -97,7 +119,7 @@ function createContextVisitor(iterateInjectedEvents, iterateId) {
         );
 
         path.node.body.splice(
-          path.node.body.indexOf(newLine) + 1,
+          path.node.body.indexOf(useContextLine) + 1,
           0,
           iterateProvider
         );
@@ -106,4 +128,4 @@ function createContextVisitor(iterateInjectedEvents, iterateId) {
   };
 }
 
-module.exports = createContextVisitor;
+module.exports = createUseContextVisitor;

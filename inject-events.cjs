@@ -11,6 +11,8 @@ const findImportSource = require('./find-import-source.js');
 // const rootElementInReturn = require('./html-element.js');
 const findSrc = require('./findSrc.js');
 const findHtmlElement = require('./findHtmlElement.js');
+const createUseContextVisitor = require('./createUseContextVisitor.js');
+const addDataAttribute = require('./addDataAttribute.js')
 
 const sourceCodeDir = './dump';
 const outputCodeDir = './dump';
@@ -42,7 +44,6 @@ function traverseDirectory(dir) {
       path.extname(filePath) === '.jsx' ||
       path.extname(filePath) === '.tsx'
     ) {
-
       processFile(filePath);
     }
   });
@@ -103,7 +104,7 @@ function processFile(filePath) {
           );
 
           let componentName = getComponentName(jsxOpeningElement);
-         
+
           targetComponentSource = findImportSource(ast, componentName);
 
           // let currJsxElement = jsxOpeningElement.parentPath;
@@ -125,10 +126,12 @@ function processFile(filePath) {
             /**
              * TODO:
              * - import clashes
+             * - react fragment bypass
              * - logic for locating the React component in the whole codebase
              * - import the created context
              * - use the created context
              * - set attribute using the values from the context
+             * - remove .jx in context import
              */
           } else {
             if (iterateEvents.length > 0) {
@@ -155,7 +158,7 @@ function processFile(filePath) {
     },
   };
 
-  traverse(ast, visitor); // sets flags
+  traverse(ast, visitor); // im setting flags here
 
   if (reactComponent) {
     // console.log('its a react component!🍎');
@@ -174,11 +177,22 @@ function processFile(filePath) {
 
     traverse(ast, contextVisitor);
     traverse(ast, providerWrapperVisitor);
-    
+
     targetDir = findSrc(filePath, targetComponentSource);
- 
-    console.log('😇',findHtmlElement(targetDir));
-    
+
+    let useContextVisitor = createUseContextVisitor(path.resolve(filePath));
+
+    const targetFileDir = findHtmlElement(targetDir);
+    const targetFileCode = fs.readFileSync(targetFileDir, 'utf-8');
+    const targetFileAst = parser.parse(targetFileCode, {
+      sourceType: 'unambiguous',
+      plugins: ['jsx', 'typescript'],
+    });
+
+    traverse(targetFileAst, useContextVisitor);
+    const modifiedAst = addDataAttribute(targetFileAst)
+    const { code: modifiedTargetFileCode } = generate(modifiedAst, {}, code);
+    fs.writeFileSync(targetFileDir, modifiedTargetFileCode);
 
   }
 
@@ -187,7 +201,6 @@ function processFile(filePath) {
     outputCodeDir,
     path.relative(sourceCodeDir, filePath)
   );
-
 
   const outputDirPath = path.dirname(outputFilePath);
   if (!fs.existsSync(outputDirPath)) {
