@@ -8,8 +8,9 @@ const isReactComponent = require('./jsx-html.js');
 const createContextVisitor = require('./working/create-context-provider.js');
 const { providerWrapperVisitor } = require('./provider-wrapper.js');
 const findImportSource = require('./find-import-source.js');
-const rootElementInReturn = require('./html-element.js');
-const findSrc = require('./findSrc.js')
+// const rootElementInReturn = require('./html-element.js');
+const findSrc = require('./findSrc.js');
+const findHtmlElement = require('./findHtmlElement.js');
 
 const sourceCodeDir = './dump';
 const outputCodeDir = './dump';
@@ -41,7 +42,7 @@ function traverseDirectory(dir) {
       path.extname(filePath) === '.jsx' ||
       path.extname(filePath) === '.tsx'
     ) {
-      console.log('🛣', filePath)
+
       processFile(filePath);
     }
   });
@@ -102,7 +103,7 @@ function processFile(filePath) {
           );
 
           let componentName = getComponentName(jsxOpeningElement);
-          console.log('component name : ', componentName);
+         
           targetComponentSource = findImportSource(ast, componentName);
 
           // let currJsxElement = jsxOpeningElement.parentPath;
@@ -173,12 +174,12 @@ function processFile(filePath) {
 
     traverse(ast, contextVisitor);
     traverse(ast, providerWrapperVisitor);
-    // rootElementInReturn(ast); // find the src for the target element and then do this
-    targetDir = findSrc(filePath, targetComponentSource)
-    // console.log(targetDir)
-    findHtmlElement(targetDir)
+    
+    targetDir = findSrc(filePath, targetComponentSource);
+ 
+    console.log('😇',findHtmlElement(targetDir));
+    
 
-    console.log('🎄', targetComponentSource);
   }
 
   const { code: modifiedCode } = generate(ast, {}, code);
@@ -187,7 +188,7 @@ function processFile(filePath) {
     path.relative(sourceCodeDir, filePath)
   );
 
-  // Ensure the output directory exists
+
   const outputDirPath = path.dirname(outputFilePath);
   if (!fs.existsSync(outputDirPath)) {
     fs.mkdirSync(outputDirPath, { recursive: true });
@@ -197,5 +198,4 @@ function processFile(filePath) {
   console.log(`Processed: ${filePath}`);
 }
 
-// Start traversing the source code directory
 traverseDirectory(sourceCodeDir);
