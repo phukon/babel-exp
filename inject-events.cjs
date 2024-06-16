@@ -7,6 +7,8 @@ const types = require('@babel/types');
 const isReactComponent = require('./jsx-html.js');
 const createContextVisitor = require('./working/create-context-provider.js');
 const { providerWrapperVisitor } = require('./provider-wrapper.js');
+const findImportSource = require('./find-import-source.js');
+const rootElementInReturn = require('./html-element.js');
 
 const sourceCodeDir = './dump';
 const outputCodeDir = './dump';
@@ -14,6 +16,14 @@ const outputCodeDir = './dump';
 // Ensure the output directory exists
 if (!fs.existsSync(outputCodeDir)) {
   fs.mkdirSync(outputCodeDir, { recursive: true });
+}
+
+function getComponentName(path) {
+  const name = path.node.name;
+  if (name?.type === 'JSXIdentifier') {
+    const tagName = name.name;
+    return tagName;
+  }
 }
 
 // Traverse the source code directory
@@ -43,14 +53,27 @@ function processFile(filePath) {
     plugins: ['jsx', 'typescript'],
   });
 
+  // const rootElement = rootElementInReturn(ast);
+  /**
+   * I'm maintaining state here because I didn't want the ast to be traversed after it has been manipulated.
+   * I didn't know about the path.stop() method.
+   * I'll refactor it in the next iteration.
+   * ~ riki
+   */
+  let iterateEvents;
+  let eventName;
+  let eventAttributes;
+  let reactComponent = false;
+  let targetComponentSource;
+
   const visitor = {
     CallExpression(path) {
       if (
         path.node?.callee?.object?.name === 'mixpanel' &&
         path.node?.callee?.property?.name === 'track'
       ) {
-        const eventName = path.node.arguments[0].value;
-        let eventAttributes = path.node.arguments[1];
+        eventName = path.node.arguments[0].value;
+        eventAttributes = path.node.arguments[1];
         if (eventAttributes?.type === 'ObjectExpression') {
           eventAttributes = eventAttributes.properties.reduce((acc, prop) => {
             acc[prop.key.name] =
@@ -71,27 +94,30 @@ function processFile(filePath) {
 
         if (jsxOpeningElement && jsxOpeningElement.node) {
           const attributes = jsxOpeningElement.node.attributes;
-          let iterateEvents = attributes.filter(
+          iterateEvents = attributes.filter(
             (attr) => attr.name.name === 'injected_events'
           );
-          // console.log('🚚');
+
+          let componentName = getComponentName(jsxOpeningElement);
+          console.log('component name : ', componentName);
+          targetComponentSource = findImportSource(ast, componentName);
+
+          // let currJsxElement = jsxOpeningElement.parentPath;
+
           if (isReactComponent(jsxOpeningElement)) {
-            console.log('its a react component!🍎');
-            if (iterateEvents.length > 0) {
-              iterateEvents = JSON.parse(atob(iterateEvents[0].value.value));
-            }
-            iterateEvents.push({
-              name: eventName,
-              attributes: eventAttributes,
-            });
+            reactComponent = true;
 
-            let contextVisitor = createContextVisitor(
-              btoa(JSON.stringify(iterateEvents)),
-              'lol'
-            );
+            // traverse(ast, contextVisitor); move outside
+            // traverse(ast, providerWrapperVisitor); move outside
+            // let combinedVisitor = {
+            //   ...contextVisitor,
+            //   ...providerWrapperVisitor,
+            // };
 
-            traverse(ast, contextVisitor);
-            traverse(ast, providerWrapperVisitor);
+            // traverse(ast, combinedVisitor);
+            // rootElementInReturn(ast);
+            // const targetComponentSource = findImportSource(ast, 'Product')
+
             /**
              * TODO:
              * - import clashes
@@ -118,7 +144,6 @@ function processFile(filePath) {
                 console.log('Removed iterate-event-names');
               }
             });
-
             attributes.push(dataIterateEvents);
           }
         }
@@ -126,10 +151,30 @@ function processFile(filePath) {
     },
   };
 
-  traverse(ast, visitor);
+  traverse(ast, visitor); // sets flags
+
+  if (reactComponent) {
+    // console.log('its a react component!🍎');
+    if (iterateEvents.length > 0) {
+      iterateEvents = JSON.parse(atob(iterateEvents[0].value.value));
+    }
+    iterateEvents.push({
+      name: eventName,
+      attributes: eventAttributes,
+    });
+
+    let contextVisitor = createContextVisitor(
+      btoa(JSON.stringify(iterateEvents)),
+      'lol'
+    );
+
+    traverse(ast, contextVisitor);
+    traverse(ast, providerWrapperVisitor);
+    rootElementInReturn(ast);
+    console.log('🎄', targetComponentSource);
+  }
 
   const { code: modifiedCode } = generate(ast, {}, code);
-
   const outputFilePath = path.join(
     outputCodeDir,
     path.relative(sourceCodeDir, filePath)

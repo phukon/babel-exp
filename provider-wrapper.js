@@ -27,13 +27,32 @@ module.exports = {
           );
 
           let currJsxElement = jsxOpeningElement.parentPath;
+          if (currJsxElement.key === 'argument') {
+            // console.log('🐵');
+            const openingElement = types.jsxOpeningElement(
+              types.jsxIdentifier('IterateProvider'),
+              []
+            );
+            const closingElement = types.jsxClosingElement(
+              types.jsxIdentifier('IterateProvider')
+            );
+            const wrapperElement = types.jsxElement(
+              openingElement,
+              closingElement,
+              [currJsxElement.node],
+              false
+            );
 
-          let childrenArray = currJsxElement.parentPath.node.children;
-          let index = childrenArray.indexOf(currJsxElement.node);
-
-          childrenArray.splice(index, 0, iterateProviderElementHead);
-          index += 1;
-          childrenArray.splice(index + 1, 0, iterateProviderElementTail);
+            currJsxElement.replaceWith(wrapperElement);
+            path.stop()
+          } else {
+            // console.log('🐱‍💻');
+            let childrenArray = currJsxElement.parentPath.node.children;
+            let index = childrenArray.indexOf(currJsxElement.node);
+            childrenArray.splice(index, 0, iterateProviderElementHead);
+            index += 1;
+            childrenArray.splice(index + 1, 0, iterateProviderElementTail);
+          }
         }
       }
     },
