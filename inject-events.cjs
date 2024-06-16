@@ -9,6 +9,7 @@ const createContextVisitor = require('./working/create-context-provider.js');
 const { providerWrapperVisitor } = require('./provider-wrapper.js');
 const findImportSource = require('./find-import-source.js');
 const rootElementInReturn = require('./html-element.js');
+const findSrc = require('./findSrc.js')
 
 const sourceCodeDir = './dump';
 const outputCodeDir = './dump';
@@ -40,6 +41,7 @@ function traverseDirectory(dir) {
       path.extname(filePath) === '.jsx' ||
       path.extname(filePath) === '.tsx'
     ) {
+      console.log('🛣', filePath)
       processFile(filePath);
     }
   });
@@ -65,6 +67,7 @@ function processFile(filePath) {
   let eventAttributes;
   let reactComponent = false;
   let targetComponentSource;
+  let targetDir;
 
   const visitor = {
     CallExpression(path) {
@@ -170,7 +173,11 @@ function processFile(filePath) {
 
     traverse(ast, contextVisitor);
     traverse(ast, providerWrapperVisitor);
-    rootElementInReturn(ast);
+    // rootElementInReturn(ast); // find the src for the target element and then do this
+    targetDir = findSrc(filePath, targetComponentSource)
+    // console.log(targetDir)
+    findHtmlElement(targetDir)
+
     console.log('🎄', targetComponentSource);
   }
 

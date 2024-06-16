@@ -12,9 +12,9 @@ module.exports = function rootElementInReturn(ast) {
           if (returnStatement) {
             const returnedElement = returnStatement.argument;
             if (returnedElement.type === 'JSXElement') {
-              console.log(
-                `Root element in the return statement is: ${returnedElement.openingElement.name.name}`
-              );
+              let name = returnedElement.openingElement.name.name;
+              console.log(`Root element in the return statement is: ${name}`);
+              return name;
             }
           }
         }
@@ -30,9 +30,9 @@ module.exports = function rootElementInReturn(ast) {
           if (returnStatement) {
             const returnedElement = returnStatement.argument;
             if (returnedElement.type === 'JSXElement') {
-              console.log(
-                `Root element in the return statement is: ${returnedElement.openingElement.name.name}`
-              );
+              let name = returnedElement.openingElement.name.name;
+              console.log(`Root element in the return statement is: ${name}`);
+              return name;
             }
           }
         }
