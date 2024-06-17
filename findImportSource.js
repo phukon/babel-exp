@@ -13,7 +13,7 @@ module.exports = function findImportSource(ast, componentName) {
   });
 
   if (importSource) {
-    console.log(`${componentName} component is imported from: ${importSource}`);
+    // console.log(`${componentName} component is imported from: ${importSource}`);
   } else {
     console.log('Component import not found');
   }

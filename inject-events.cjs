@@ -4,10 +4,10 @@ const parser = require('@babel/parser');
 const traverse = require('@babel/traverse').default;
 const generate = require('@babel/generator').default;
 const types = require('@babel/types');
-const isReactComponent = require('./jsx-html.js');
+const isReactComponent = require('./isReactComponent.js');
 const createContextVisitor = require('./working/create-context-provider.js');
 const { providerWrapperVisitor } = require('./provider-wrapper.js');
-const findImportSource = require('./find-import-source.js');
+const findImportSource = require('./findImportSource.js');
 // const rootElementInReturn = require('./html-element.js');
 const findSrc = require('./findSrc.js');
 const findHtmlElement = require('./findHtmlElement.js');
@@ -181,12 +181,32 @@ function processFile(filePath) {
     traverse(ast, providerWrapperVisitor);
 
     targetDir = findSrc(filePath, targetComponentSource);
+    console.log('📦', filePath);
 
     let importContextVisitor = createImportContextVisitor(
       path.resolve(filePath)
     );
 
+    /**
+     * find the target compo  <------------------
+     *           |                               |
+     *           |                               |
+     *           |                               |
+     * check if root is html --- NO -------------
+     *      |
+     *      |
+     *     Yes
+     *      |
+     *      |
+     *      V
+     * Do changes
+     * 
+     * TODO:
+     * - find relative path
+     */
+
     const targetFileDir = findHtmlElement(targetDir);
+    console.log('🎯', targetFileDir);
     const targetFileCode = fs.readFileSync(targetFileDir, 'utf-8');
     const targetFileAst = parser.parse(targetFileCode, {
       sourceType: 'unambiguous',

@@ -11,14 +11,12 @@ export const IterateProvider = children => {
   }}>{children}</IterateContext.Provider>;
 };
 const Lol = () => {
-  return <IterateProvider>
-      <IterateProvider><Product onClick={() => {
+  return <IterateProvider><Product onClick={() => {
       mixpanel.track('product_clicked', {
         product: product.name,
         price: product.price,
         category: product.category
       });
-    }} /></IterateProvider>
-    </IterateProvider>;
+    }} /></IterateProvider>;
 };
 export default Lol;

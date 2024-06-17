@@ -1,7 +1,8 @@
 import React from 'react';
+import Grandchild from './grandchild/Grandchild.jsx';
 const Child = () => {
-  return <div>
+  return <Grandchild>
       <p>lol</p>
-    </div>;
+    </Grandchild>;
 };
 export default Child;

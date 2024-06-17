@@ -57,7 +57,7 @@ module.exports = function rootElementInReturn(ast) {
   }
 
   if (rootElementName) {
-    console.log(`Root element in the return statement is: ${rootElementName}`);
+    // console.log(`Root element in the return statement is: ${rootElementName}`);
   }
 
   return rootElementName;

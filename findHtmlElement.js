@@ -1,6 +1,6 @@
-const findImportSource = require('./find-import-source');
+const findImportSource = require('./findImportSource.js');
 const findSrc = require('./findSrc');
-const rootElementInReturn = require('./html-element.js');
+const rootElementInReturn = require('./rootElementInReturn.js');
 const fs = require('fs');
 const parser = require('@babel/parser');
 
@@ -13,12 +13,12 @@ module.exports = function findHtmlElement(filePath) {
   });
 
   let rootElementName = rootElementInReturn(ast);
-  console.log('🎇', rootElementName);
+  // console.log('🎇', rootElementName);
   let isReactComponent =
     rootElementName[0] === rootElementName[0].toUpperCase();
 
   while (isReactComponent) {
-    console.log('🧨', rootElementName);
+    // console.log('🧨', rootElementName);
     const targetComponentSource = findImportSource(ast, rootElementName);
     const targetDir = findSrc(currentFilePath, targetComponentSource);
     if (!targetDir) {
