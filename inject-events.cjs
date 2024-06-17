@@ -172,20 +172,20 @@ function processFile(filePath) {
       attributes: eventAttributes,
     });
 
-    let contextVisitor = createContextVisitor(
-      btoa(JSON.stringify(iterateEvents)),
-      'lol'
-    );
+    // let contextVisitor = createContextVisitor(
+    //   btoa(JSON.stringify(iterateEvents)),
+    //   'lol'
+    // );
 
-    traverse(ast, contextVisitor);
-    traverse(ast, providerWrapperVisitor);
+    // traverse(ast, contextVisitor);
+    // traverse(ast, providerWrapperVisitor);
 
     targetDir = findSrc(filePath, targetComponentSource);
-    console.log('📦', filePath);
+    // console.log('📦', filePath);
 
-    let importContextVisitor = createImportContextVisitor(
-      path.resolve(filePath)
-    );
+    // let importContextVisitor = createImportContextVisitor(
+    //   path.resolve(filePath)
+    // );
 
     /**
      * find the target compo  <------------------
@@ -200,22 +200,26 @@ function processFile(filePath) {
      *      |
      *      V
      * Do changes
-     * 
+     *
      * TODO:
      * - find relative path
      */
 
     const targetFileDir = findHtmlElement(targetDir);
-    console.log('🎯', targetFileDir);
+    // console.log('🎯', targetFileDir);
     const targetFileCode = fs.readFileSync(targetFileDir, 'utf-8');
     const targetFileAst = parser.parse(targetFileCode, {
       sourceType: 'unambiguous',
       plugins: ['jsx', 'typescript'],
     });
 
-    traverse(targetFileAst, importContextVisitor);
-    let modifiedAst = addDataAttribute(targetFileAst);
-    modifiedAst = createUseContext(modifiedAst, targetDir);
+    // traverse(targetFileAst, importContextVisitor);
+    let modifiedAst = addDataAttribute(
+      targetFileAst,
+      btoa(JSON.stringify(iterateEvents)),
+      'some-id'
+    );
+    // modifiedAst = createUseContext(modifiedAst, targetDir);
     // I can remove the use of contexts -->
     // const modifiedAst = addDataAttribute(
     //   targetFileAst,
