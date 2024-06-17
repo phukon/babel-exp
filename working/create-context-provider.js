@@ -3,13 +3,11 @@ const types = require('@babel/types');
 function createContextVisitor(iterateInjectedEvents, iterateId) {
   return {
     Program(path) {
-      // Find the last import declaration
       const lastImport = path.node.body.reduceRight((foundNode, node) => {
         return foundNode || (types.isImportDeclaration(node) ? node : null);
       }, null);
 
       if (lastImport) {
-        // Create the import declaration
         const importDeclaration = types.importDeclaration(
           [
             types.importSpecifier(

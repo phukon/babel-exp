@@ -11,8 +11,10 @@ const findImportSource = require('./find-import-source.js');
 // const rootElementInReturn = require('./html-element.js');
 const findSrc = require('./findSrc.js');
 const findHtmlElement = require('./findHtmlElement.js');
-const createUseContextVisitor = require('./createUseContextVisitor.js');
-const addDataAttribute = require('./addDataAttribute.js')
+const createImportContextVisitor = require('./createImportContextVisitor.js');
+const addDataAttribute = require('./addDataAttribute.js');
+// const addUseContextLine = require('./createUseContext.js');
+const createUseContext = require('./createUseContext.js');
 
 const sourceCodeDir = './dump';
 const outputCodeDir = './dump';
@@ -60,7 +62,7 @@ function processFile(filePath) {
   // const rootElement = rootElementInReturn(ast);
   /**
    * I'm maintaining state here because I didn't want the ast to be traversed after it has been manipulated.
-   * I didn't know about the path.stop() method.
+   * I didn't know about the path.stop() method when I wrote this
    * I'll refactor it in the next iteration.
    * ~ riki
    */
@@ -180,7 +182,9 @@ function processFile(filePath) {
 
     targetDir = findSrc(filePath, targetComponentSource);
 
-    let useContextVisitor = createUseContextVisitor(path.resolve(filePath));
+    let importContextVisitor = createImportContextVisitor(
+      path.resolve(filePath)
+    );
 
     const targetFileDir = findHtmlElement(targetDir);
     const targetFileCode = fs.readFileSync(targetFileDir, 'utf-8');
@@ -189,14 +193,21 @@ function processFile(filePath) {
       plugins: ['jsx', 'typescript'],
     });
 
-    traverse(targetFileAst, useContextVisitor);
-    const modifiedAst = addDataAttribute(targetFileAst)
+    traverse(targetFileAst, importContextVisitor);
+    let modifiedAst = addDataAttribute(targetFileAst);
+    modifiedAst = createUseContext(modifiedAst, targetDir);
+    // I can remove the use of contexts -->
+    // const modifiedAst = addDataAttribute(
+    //   targetFileAst,
+    //   'iterateId1234',
+    //   btoa(JSON.stringify(iterateEvents))
+    // );
     const { code: modifiedTargetFileCode } = generate(modifiedAst, {}, code);
     fs.writeFileSync(targetFileDir, modifiedTargetFileCode);
-
   }
 
   const { code: modifiedCode } = generate(ast, {}, code);
+
   const outputFilePath = path.join(
     outputCodeDir,
     path.relative(sourceCodeDir, filePath)

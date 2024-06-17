@@ -1,5 +1,5 @@
 const traverse = require('@babel/traverse').default;
-const parser = require('@babel/parser');
+// const parser = require('@babel/parser');
 
 function getRootElementNameFromBody(body) {
   if (body.type === 'BlockStatement') {
