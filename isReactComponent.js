@@ -1,4 +1,5 @@
 function isReactComponent(path) {
+
   let isComponent = false;
   const name = path.node.name;
 
