@@ -1,9 +1,7 @@
-import React from 'react'
-
+import React from 'react';
+import { IterateWrapper } from "test\\Testchild.jsx";
+import { IterateWrapper } from "..\\..\\test\\Testchild.jsx";
 const Testchild = () => {
-  return (
-    <div>Testchild</div>
-  )
-}
-
-export default Testchild
+  return <div data-iterateid={iterateId} data-iterateinjectedevents={iterateInjectedEvents} data-iterateid={iterateId} data-iterateinjectedevents={iterateInjectedEvents} data-iterateid={iterateId} data-iterateinjectedevents={iterateInjectedEvents} data-iterateid={iterateId} data-iterateinjectedevents={iterateInjectedEvents} data-iterateid={iterateId} data-iterateinjectedevents={iterateInjectedEvents} data-iterateid={iterateId} data-iterateinjectedevents={iterateInjectedEvents} data-iterateid={iterateId} data-iterateinjectedevents={iterateInjectedEvents} data-iterateid={iterateId} data-iterateinjectedevents={iterateInjectedEvents} data-iterateid={iterateId} data-iterateinjectedevents={iterateInjectedEvents} data-iterateid={iterateId} data-iterateinjectedevents={iterateInjectedEvents} data-iterateid={iterateId} data-iterateinjectedevents={iterateInjectedEvents} data-iterateid={iterateId} data-iterateinjectedevents={iterateInjectedEvents} data-iterateid={iterateId} data-iterateinjectedevents={iterateInjectedEvents} data-iterateid={iterateId} data-iterateinjectedevents={iterateInjectedEvents} data-iterateid={iterateId} data-iterateinjectedevents={iterateInjectedEvents} data-iterateid={iterateId} data-iterateinjectedevents={iterateInjectedEvents} data-iterateid={iterateId} data-iterateinjectedevents={iterateInjectedEvents} data-iterateid={iterateId} data-iterateinjectedevents={iterateInjectedEvents} data-iterateid={iterateId} data-iterateinjectedevents={iterateInjectedEvents} data-iterateid={iterateId} data-iterateinjectedevents={iterateInjectedEvents} data-iterateid={iterateId} data-iterateinjectedevents={iterateInjectedEvents} data-iterateid={iterateId} data-iterateinjectedevents={iterateInjectedEvents} data-iterateid={iterateId} data-iterateinjectedevents={iterateInjectedEvents}>Testchild</div>;
+};
+export default Testchild;

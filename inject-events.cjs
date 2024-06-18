@@ -5,14 +5,20 @@ const traverse = require('@babel/traverse').default;
 const generate = require('@babel/generator').default;
 const types = require('@babel/types');
 const isReactComponent = require('./isReactComponent.js');
-const findImportSource = require('./findImportSource.js');
-const findSrc = require('./findSrc.js');
-const findHtmlElement = require('./findHtmlElement.js');
-const createImportContextVisitor = require('./createImportContextVisitor.js');
-const addDataAttribute = require('./addDataAttribute.js');
+// const findImportSource = require('./findImportSource.js');
+// const findSrc = require('./findSrc.js');
+// const findHtmlElement = require('./findHtmlElement.js');
+// const addDataAttribute = require('./addDataAttribute.js');
+const {
+  createIterateUtilFile,
+  findSrcDirectory,
+} = require('./createIterateUtil.js');
+const addWrapper = require('./addWrapper.js');
+const importWrapper = require('./importWrapper.js');
 
 const sourceCodeDir = './dump';
 const outputCodeDir = './dump';
+let srcDir;
 
 // Ensure the output directory exists
 if (!fs.existsSync(outputCodeDir)) {
@@ -48,13 +54,16 @@ function traverseDirectory(dir) {
 
 // Process a single file
 function processFile(filePath) {
+  let isMixpanelTrackerInFile = false;
+  let wrapperArray = [];
   const code = fs.readFileSync(filePath, 'utf-8');
   const ast = parser.parse(code, {
     sourceType: 'unambiguous',
     plugins: ['jsx', 'typescript'],
   });
+  // importWrapper(ast, `${srcDir}${path.sep}/IterateUtil.jsx`, filePath);
 
-  let components = [];
+  const components = [];
 
   const visitor = {
     CallExpression(path) {
@@ -62,6 +71,7 @@ function processFile(filePath) {
         path.node?.callee?.object?.name === 'mixpanel' &&
         path.node?.callee?.property?.name === 'track'
       ) {
+        isMixpanelTrackerInFile = true;
         const eventName = path.node.arguments[0].value;
         let eventAttributes = path.node.arguments[1];
         if (eventAttributes?.type === 'ObjectExpression') {
@@ -83,13 +93,13 @@ function processFile(filePath) {
         }
 
         if (jsxOpeningElement && jsxOpeningElement.node) {
-          const componentName = getComponentName(jsxOpeningElement);
+          const isComponent = isReactComponent(jsxOpeningElement);
 
           components.push({
             jsxOpeningElement,
-            componentName,
             eventName,
             eventAttributes,
+            isComponent,
           });
         }
       }
@@ -98,47 +108,102 @@ function processFile(filePath) {
 
   traverse(ast, visitor);
 
-  components.forEach(({ jsxOpeningElement, componentName, eventName, eventAttributes }) => {
-    let iterateEvents = [];
-    const attributes = jsxOpeningElement.node.attributes;
-    const existingEventAttr = attributes.find(attr => attr.name.name === 'injected_events');
+  components.forEach(
+    ({ jsxOpeningElement, eventName, eventAttributes, isComponent }) => {
+      const attributes = jsxOpeningElement.node.attributes;
+      let iterateEvents = [];
+      const existingEventAttr = attributes.find(
+        (attr) => attr.name.name === 'injected_events'
+      );
 
-    if (existingEventAttr) {
-      iterateEvents = JSON.parse(atob(existingEventAttr.value.value));
-      attributes.splice(attributes.indexOf(existingEventAttr), 1);
-    }
+      if (existingEventAttr) {
+        iterateEvents = JSON.parse(atob(existingEventAttr.value.value));
+        attributes.splice(attributes.indexOf(existingEventAttr), 1);
+      }
 
-    iterateEvents.push({
-      name: eventName,
-      attributes: eventAttributes,
-    });
-
-    const dataIterateEvents = types.jsxAttribute(
-      types.jsxIdentifier('injected_events'),
-      types.stringLiteral(btoa(JSON.stringify(iterateEvents)))
-    );
-    attributes.push(dataIterateEvents);
-
-    if (isReactComponent(jsxOpeningElement)) {
-      const targetComponentSource = findImportSource(ast, componentName);
-      const targetDir = findSrc(filePath, targetComponentSource);
-      const targetFileDir = findHtmlElement(targetDir);
-      const targetFileCode = fs.readFileSync(targetFileDir, 'utf-8');
-      const targetFileAst = parser.parse(targetFileCode, {
-        sourceType: 'unambiguous',
-        plugins: ['jsx', 'typescript'],
+      iterateEvents.push({
+        name: eventName,
+        attributes: eventAttributes,
       });
 
-      let modifiedAst = addDataAttribute(
-        targetFileAst,
-        btoa(JSON.stringify(iterateEvents)),
-        'some-id'
+      const dataIterateEvents = types.jsxAttribute(
+        types.jsxIdentifier('injected_events'),
+        types.stringLiteral(btoa(JSON.stringify(iterateEvents)))
       );
-      const { code: modifiedTargetFileCode } = generate(modifiedAst, {}, code);
-      fs.writeFileSync(targetFileDir, modifiedTargetFileCode);
-    }
-  });
 
+      // Remove old 'data-iterateid' and 'data-iterateinjectedevents' attributes
+      const existingIterateIdAttr = attributes.find(
+        (attr) => attr.name.name === 'data-iterateid'
+      );
+      if (existingIterateIdAttr) {
+        attributes.splice(attributes.indexOf(existingIterateIdAttr), 1);
+      }
+      const existingIterateInjectedEventsAttr = attributes.find(
+        (attr) => attr.name.name === 'data-iterateinjectedevents'
+      );
+      if (existingIterateInjectedEventsAttr) {
+        attributes.splice(
+          attributes.indexOf(existingIterateInjectedEventsAttr),
+          1
+        );
+      }
+
+      if (isComponent) {
+        const componentName = getComponentName(jsxOpeningElement);
+        traverse(ast, {
+          JSXIdentifier(path) {
+            if (path.node.name === componentName) {
+              path.node.name = `Iterate${componentName}`;
+            }
+          },
+        });
+
+        let dataiterate = {
+          events: [iterateEvents],
+          filePath: filePath,
+        };
+
+        let wrapper = {
+          originalName: componentName,
+          wrapperName: `Iterate${componentName}`,
+          dataiterate,
+        };
+
+        wrapperArray.push(wrapper); // this is not a pure function... will refactor later
+
+        // const targetComponentSource = findImportSource(ast, componentName);
+        // const targetDir = findSrc(filePath, targetComponentSource);
+        // const targetFileDir = findHtmlElement(targetDir);
+        // const targetFileCode = fs.readFileSync(targetFileDir, 'utf-8');
+        // const targetFileAst = parser.parse(targetFileCode, {
+        //   sourceType: 'unambiguous',
+        //   plugins: ['jsx', 'typescript'],
+        // });
+        // let modifiedAst = addDataAttribute(
+        //   targetFileAst,
+        //   btoa(JSON.stringify(iterateEvents)),
+        //   'some-id'
+        // );
+        // const { code: modifiedTargetFileCode } = generate(
+        //   modifiedAst,
+        //   {},
+        //   code
+        // );
+        // fs.writeFileSync(targetFileDir, modifiedTargetFileCode);
+      } else {
+        attributes.push(dataIterateEvents);
+      }
+    }
+  );
+  wrapperArray.forEach(({ originalName, wrapperName, dataiterate }) => {
+    console.log(dataiterate);
+    addWrapper(
+      ast,
+      originalName,
+      wrapperName,
+      btoa(JSON.stringify(dataiterate))
+    );
+  });
   const { code: modifiedCode } = generate(ast, {}, code);
 
   const outputFilePath = path.join(
@@ -155,4 +220,7 @@ function processFile(filePath) {
   console.log(`Processed: ${filePath}`);
 }
 
+// Are component wrapper resides here
+srcDir = findSrcDirectory(sourceCodeDir); // finds the 'src' dir in a project
+createIterateUtilFile(sourceCodeDir);
 traverseDirectory(sourceCodeDir);

@@ -8,14 +8,6 @@
           "price": "MemberExpression",
           "category": "MemberExpression"
         }
-      },
-      {
-        "name": "funnel_1",
-        "attributes": {
-          "product": "MemberExpression",
-          "price": "MemberExpression",
-          "category": "MemberExpression"
-        }
       }
     ],
     "filePath": "dump/Gl/Fl/GreatGrandChild.jsx"

@@ -1,22 +1,34 @@
-import React from 'react';
-import Product from './Product.jsx';
 const Lol = () => {
-  return <div onClick={() => {
-    mixpanel.track('product_clicked', {
-      product: product.name,
-      price: product.price,
-      category: product.category
-    });
-    mixpanel.track('product_clicked', {
-      product: product.name,
-      price: product.price,
-      category: product.category
-    });
-    mixpanel.track('product_clicked', {
-      product: product.name,
-      price: product.price,
-      category: product.category
-    });
-  }} injected_events="W3sibmFtZSI6InByb2R1Y3RfY2xpY2tlZCIsImF0dHJpYnV0ZXMiOnsicHJvZHVjdCI6Ik1lbWJlckV4cHJlc3Npb24iLCJwcmljZSI6Ik1lbWJlckV4cHJlc3Npb24iLCJjYXRlZ29yeSI6Ik1lbWJlckV4cHJlc3Npb24ifX0seyJuYW1lIjoicHJvZHVjdF9jbGlja2VkIiwiYXR0cmlidXRlcyI6eyJwcm9kdWN0IjoiTWVtYmVyRXhwcmVzc2lvbiIsInByaWNlIjoiTWVtYmVyRXhwcmVzc2lvbiIsImNhdGVnb3J5IjoiTWVtYmVyRXhwcmVzc2lvbiJ9fSx7Im5hbWUiOiJwcm9kdWN0X2NsaWNrZWQiLCJhdHRyaWJ1dGVzIjp7InByb2R1Y3QiOiJNZW1iZXJFeHByZXNzaW9uIiwicHJpY2UiOiJNZW1iZXJFeHByZXNzaW9uIiwiY2F0ZWdvcnkiOiJNZW1iZXJFeHByZXNzaW9uIn19LHsibmFtZSI6InByb2R1Y3RfY2xpY2tlZCIsImF0dHJpYnV0ZXMiOnsicHJvZHVjdCI6Ik1lbWJlckV4cHJlc3Npb24iLCJwcmljZSI6Ik1lbWJlckV4cHJlc3Npb24iLCJjYXRlZ29yeSI6Ik1lbWJlckV4cHJlc3Npb24ifX0seyJuYW1lIjoicHJvZHVjdF9jbGlja2VkIiwiYXR0cmlidXRlcyI6eyJwcm9kdWN0IjoiTWVtYmVyRXhwcmVzc2lvbiIsInByaWNlIjoiTWVtYmVyRXhwcmVzc2lvbiIsImNhdGVnb3J5IjoiTWVtYmVyRXhwcmVzc2lvbiJ9fSx7Im5hbWUiOiJwcm9kdWN0X2NsaWNrZWQiLCJhdHRyaWJ1dGVzIjp7InByb2R1Y3QiOiJNZW1iZXJFeHByZXNzaW9uIiwicHJpY2UiOiJNZW1iZXJFeHByZXNzaW9uIiwiY2F0ZWdvcnkiOiJNZW1iZXJFeHByZXNzaW9uIn19LHsibmFtZSI6InByb2R1Y3RfY2xpY2tlZCIsImF0dHJpYnV0ZXMiOnsicHJvZHVjdCI6Ik1lbWJlckV4cHJlc3Npb24iLCJwcmljZSI6Ik1lbWJlckV4cHJlc3Npb24iLCJjYXRlZ29yeSI6Ik1lbWJlckV4cHJlc3Npb24ifX0seyJuYW1lIjoicHJvZHVjdF9jbGlja2VkIiwiYXR0cmlidXRlcyI6eyJwcm9kdWN0IjoiTWVtYmVyRXhwcmVzc2lvbiIsInByaWNlIjoiTWVtYmVyRXhwcmVzc2lvbiIsImNhdGVnb3J5IjoiTWVtYmVyRXhwcmVzc2lvbiJ9fSx7Im5hbWUiOiJwcm9kdWN0X2NsaWNrZWQiLCJhdHRyaWJ1dGVzIjp7InByb2R1Y3QiOiJNZW1iZXJFeHByZXNzaW9uIiwicHJpY2UiOiJNZW1iZXJFeHByZXNzaW9uIiwiY2F0ZWdvcnkiOiJNZW1iZXJFeHByZXNzaW9uIn19LHsibmFtZSI6InByb2R1Y3RfY2xpY2tlZCIsImF0dHJpYnV0ZXMiOnsicHJvZHVjdCI6Ik1lbWJlckV4cHJlc3Npb24iLCJwcmljZSI6Ik1lbWJlckV4cHJlc3Npb24iLCJjYXRlZ29yeSI6Ik1lbWJlckV4cHJlc3Npb24ifX0seyJuYW1lIjoicHJvZHVjdF9jbGlja2VkIiwiYXR0cmlidXRlcyI6eyJwcm9kdWN0IjoiTWVtYmVyRXhwcmVzc2lvbiIsInByaWNlIjoiTWVtYmVyRXhwcmVzc2lvbiIsImNhdGVnb3J5IjoiTWVtYmVyRXhwcmVzc2lvbiJ9fSx7Im5hbWUiOiJwcm9kdWN0X2NsaWNrZWQiLCJhdHRyaWJ1dGVzIjp7InByb2R1Y3QiOiJNZW1iZXJFeHByZXNzaW9uIiwicHJpY2UiOiJNZW1iZXJFeHByZXNzaW9uIiwiY2F0ZWdvcnkiOiJNZW1iZXJFeHByZXNzaW9uIn19LHsibmFtZSI6InByb2R1Y3RfY2xpY2tlZCIsImF0dHJpYnV0ZXMiOnsicHJvZHVjdCI6Ik1lbWJlckV4cHJlc3Npb24iLCJwcmljZSI6Ik1lbWJlckV4cHJlc3Npb24iLCJjYXRlZ29yeSI6Ik1lbWJlckV4cHJlc3Npb24ifX0seyJuYW1lIjoicHJvZHVjdF9jbGlja2VkIiwiYXR0cmlidXRlcyI6eyJwcm9kdWN0IjoiTWVtYmVyRXhwcmVzc2lvbiIsInByaWNlIjoiTWVtYmVyRXhwcmVzc2lvbiIsImNhdGVnb3J5IjoiTWVtYmVyRXhwcmVzc2lvbiJ9fSx7Im5hbWUiOiJwcm9kdWN0X2NsaWNrZWQiLCJhdHRyaWJ1dGVzIjp7InByb2R1Y3QiOiJNZW1iZXJFeHByZXNzaW9uIiwicHJpY2UiOiJNZW1iZXJFeHByZXNzaW9uIiwiY2F0ZWdvcnkiOiJNZW1iZXJFeHByZXNzaW9uIn19LHsibmFtZSI6InByb2R1Y3RfY2xpY2tlZCIsImF0dHJpYnV0ZXMiOnsicHJvZHVjdCI6Ik1lbWJlckV4cHJlc3Npb24iLCJwcmljZSI6Ik1lbWJlckV4cHJlc3Npb24iLCJjYXRlZ29yeSI6Ik1lbWJlckV4cHJlc3Npb24ifX0seyJuYW1lIjoicHJvZHVjdF9jbGlja2VkIiwiYXR0cmlidXRlcyI6eyJwcm9kdWN0IjoiTWVtYmVyRXhwcmVzc2lvbiIsInByaWNlIjoiTWVtYmVyRXhwcmVzc2lvbiIsImNhdGVnb3J5IjoiTWVtYmVyRXhwcmVzc2lvbiJ9fSx7Im5hbWUiOiJwcm9kdWN0X2NsaWNrZWQiLCJhdHRyaWJ1dGVzIjp7InByb2R1Y3QiOiJNZW1iZXJFeHByZXNzaW9uIiwicHJpY2UiOiJNZW1iZXJFeHByZXNzaW9uIiwiY2F0ZWdvcnkiOiJNZW1iZXJFeHByZXNzaW9uIn19LHsibmFtZSI6InByb2R1Y3RfY2xpY2tlZCIsImF0dHJpYnV0ZXMiOnsicHJvZHVjdCI6Ik1lbWJlckV4cHJlc3Npb24iLCJwcmljZSI6Ik1lbWJlckV4cHJlc3Npb24iLCJjYXRlZ29yeSI6Ik1lbWJlckV4cHJlc3Npb24ifX0seyJuYW1lIjoicHJvZHVjdF9jbGlja2VkIiwiYXR0cmlidXRlcyI6eyJwcm9kdWN0IjoiTWVtYmVyRXhwcmVzc2lvbiIsInByaWNlIjoiTWVtYmVyRXhwcmVzc2lvbiIsImNhdGVnb3J5IjoiTWVtYmVyRXhwcmVzc2lvbiJ9fSx7Im5hbWUiOiJwcm9kdWN0X2NsaWNrZWQiLCJhdHRyaWJ1dGVzIjp7InByb2R1Y3QiOiJNZW1iZXJFeHByZXNzaW9uIiwicHJpY2UiOiJNZW1iZXJFeHByZXNzaW9uIiwiY2F0ZWdvcnkiOiJNZW1iZXJFeHByZXNzaW9uIn19LHsibmFtZSI6InByb2R1Y3RfY2xpY2tlZCIsImF0dHJpYnV0ZXMiOnsicHJvZHVjdCI6Ik1lbWJlckV4cHJlc3Npb24iLCJwcmljZSI6Ik1lbWJlckV4cHJlc3Npb24iLCJjYXRlZ29yeSI6Ik1lbWJlckV4cHJlc3Npb24ifX0seyJuYW1lIjoicHJvZHVjdF9jbGlja2VkIiwiYXR0cmlidXRlcyI6eyJwcm9kdWN0IjoiTWVtYmVyRXhwcmVzc2lvbiIsInByaWNlIjoiTWVtYmVyRXhwcmVzc2lvbiIsImNhdGVnb3J5IjoiTWVtYmVyRXhwcmVzc2lvbiJ9fSx7Im5hbWUiOiJwcm9kdWN0X2NsaWNrZWQiLCJhdHRyaWJ1dGVzIjp7InByb2R1Y3QiOiJNZW1iZXJFeHByZXNzaW9uIiwicHJpY2UiOiJNZW1iZXJFeHByZXNzaW9uIiwiY2F0ZWdvcnkiOiJNZW1iZXJFeHByZXNzaW9uIn19XQ==" />;
+  return (
+    <div>
+      <Product
+        onClick={() => {
+          mixpanel.track('product_clicked', {
+            product: product.name,
+            price: product.price,
+            category: product.category,
+          });
+        }}
+      />
+      <PolyProd
+        onClick={() => {
+          mixpanel.track('product_clicked', {
+            product: product.name,
+            price: product.price,
+            category: product.category,
+          });
+        }}
+      />
+      <div
+        onClick={() => {
+          mixpanel.track('product_clicked', {
+            product: product.name,
+            price: product.price,
+            category: product.category,
+          });
+        }}
+      />
+    </div>
+  );
 };
 export default Lol;
