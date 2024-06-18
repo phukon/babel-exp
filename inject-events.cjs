@@ -61,7 +61,7 @@ function processFile(filePath) {
     sourceType: 'unambiguous',
     plugins: ['jsx', 'typescript'],
   });
-  // importWrapper(ast, `${srcDir}${path.sep}/IterateUtil.jsx`, filePath);
+  importWrapper(ast, `${srcDir}${path.sep}IterateUtil.jsx`, filePath);
 
   const components = [];
 
@@ -222,5 +222,6 @@ function processFile(filePath) {
 
 // Are component wrapper resides here
 srcDir = findSrcDirectory(sourceCodeDir); // finds the 'src' dir in a project
+console.log('🎁',srcDir)
 createIterateUtilFile(sourceCodeDir);
 traverseDirectory(sourceCodeDir);
