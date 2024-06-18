@@ -1,7 +1,5 @@
 import React from 'react';
 import ReactDOM from 'react-dom';
-import { IterateWrapper } from "test\\CutomElement.jsx";
-import { IterateWrapper } from "..\\..\\test\\CutomElement.jsx";
 const withCustomAttributes = (WrappedComponent, customAttributes) => {
   return class extends React.Component {
     componentDidMount() {

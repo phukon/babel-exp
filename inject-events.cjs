@@ -19,6 +19,7 @@ const importWrapper = require('./importWrapper.js');
 const sourceCodeDir = './dump';
 const outputCodeDir = './dump';
 let srcDir;
+let projectType = null;
 
 // Ensure the output directory exists
 if (!fs.existsSync(outputCodeDir)) {
@@ -30,6 +31,13 @@ function getComponentName(path) {
   if (name?.type === 'JSXIdentifier') {
     const tagName = name.name;
     return tagName;
+  }
+}
+
+function setProjectType(ext) {
+  if (!projectType && (ext === '.jsx' || ext === '.tsx')) {
+    projectType = ext;
+    console.log(`Project type set to: ${projectType}`);
   }
 }
 
@@ -47,6 +55,7 @@ function traverseDirectory(dir) {
       path.extname(filePath) === '.jsx' ||
       path.extname(filePath) === '.tsx'
     ) {
+      setProjectType(path.extname(filePath));
       processFile(filePath);
     }
   });
@@ -61,7 +70,7 @@ function processFile(filePath) {
     sourceType: 'unambiguous',
     plugins: ['jsx', 'typescript'],
   });
-  importWrapper(ast, `${srcDir}${path.sep}IterateUtil.jsx`, filePath);
+  // importWrapper(ast, `${srcDir}${path.sep}IterateUtil.jsx`, filePath);
 
   const components = [];
 
@@ -107,6 +116,8 @@ function processFile(filePath) {
   };
 
   traverse(ast, visitor);
+  isMixpanelTrackerInFile &&
+    importWrapper(ast, `${srcDir}${path.sep}IterateUtil`, filePath);
 
   components.forEach(
     ({ jsxOpeningElement, eventName, eventAttributes, isComponent }) => {
@@ -196,7 +207,7 @@ function processFile(filePath) {
     }
   );
   wrapperArray.forEach(({ originalName, wrapperName, dataiterate }) => {
-    console.log(dataiterate);
+    // console.log(dataiterate);
     addWrapper(
       ast,
       originalName,
@@ -222,6 +233,6 @@ function processFile(filePath) {
 
 // Are component wrapper resides here
 srcDir = findSrcDirectory(sourceCodeDir); // finds the 'src' dir in a project
-console.log('🎁',srcDir)
+console.log('🎁', srcDir);
 createIterateUtilFile(sourceCodeDir);
 traverseDirectory(sourceCodeDir);
