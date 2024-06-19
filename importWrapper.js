@@ -7,22 +7,30 @@ function importWrapper(targetAst, to, from) {
   let relativePath = path.relative(from, to);
 
   const importName = 'IterateWrapper';
-  const importSpecifier = types.importSpecifier(
-    types.identifier(importName),
+  // const importSpecifier = types.importSpecifier(
+  //   types.identifier(importName),
+  //   types.identifier(importName)
+  // );
+
+  // const importDeclaration = types.importDeclaration(
+  //   [importSpecifier],
+  //   types.stringLiteral(relativePath)
+  // );
+
+  const importDefaultSpecifier = types.importDefaultSpecifier(
     types.identifier(importName)
   );
 
   const importDeclaration = types.importDeclaration(
-    [importSpecifier],
+    [importDefaultSpecifier],
     types.stringLiteral(relativePath)
   );
 
-  // Check if IterateWrapper is already imported
   let isImported = false;
   traverse(ast, {
     ImportDeclaration(path) {
       const specifiers = path.node.specifiers;
-      if (specifiers.some(specifier => specifier.local.name === importName)) {
+      if (specifiers.some((specifier) => specifier.local.name === importName)) {
         isImported = true;
       }
     },

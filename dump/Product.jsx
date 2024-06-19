@@ -1,5 +1,4 @@
-import React from 'react';
-import Child from './childDir/Child.jsx';
+import Child from './childDir/Child.js';
 const Product = () => {
   return <Child />;
 };

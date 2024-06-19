@@ -1,4 +1,5 @@
 import React from 'react';
+import IterateWrapper from "..\\..\\src\\IterateUtil";
 const ExampleComponent = () => {
   const trackEvent = (eventName, eventAttributes) => {
     mixpanel.track(eventName, eventAttributes);

@@ -143,21 +143,21 @@ function processFile(filePath) {
       );
 
       // Remove old 'data-iterateid' and 'data-iterateinjectedevents' attributes
-      const existingIterateIdAttr = attributes.find(
-        (attr) => attr.name.name === 'data-iterateid'
-      );
-      if (existingIterateIdAttr) {
-        attributes.splice(attributes.indexOf(existingIterateIdAttr), 1);
-      }
-      const existingIterateInjectedEventsAttr = attributes.find(
-        (attr) => attr.name.name === 'data-iterateinjectedevents'
-      );
-      if (existingIterateInjectedEventsAttr) {
-        attributes.splice(
-          attributes.indexOf(existingIterateInjectedEventsAttr),
-          1
-        );
-      }
+      // const existingIterateIdAttr = attributes.find(
+      //   (attr) => attr.name.name === 'data-iterateid'
+      // );
+      // if (existingIterateIdAttr) {
+      //   attributes.splice(attributes.indexOf(existingIterateIdAttr), 1);
+      // }
+      // const existingIterateInjectedEventsAttr = attributes.find(
+      //   (attr) => attr.name.name === 'data-iterateinjectedevents'
+      // );
+      // if (existingIterateInjectedEventsAttr) {
+      //   attributes.splice(
+      //     attributes.indexOf(existingIterateInjectedEventsAttr),
+      //     1
+      //   );
+      // }
 
       if (isComponent) {
         const componentName = getComponentName(jsxOpeningElement);
@@ -233,6 +233,6 @@ function processFile(filePath) {
 
 // Are component wrapper resides here
 srcDir = findSrcDirectory(sourceCodeDir); // finds the 'src' dir in a project
-console.log('🎁', srcDir);
-createIterateUtilFile(sourceCodeDir);
+// console.log('🎁', srcDir);
 traverseDirectory(sourceCodeDir);
+createIterateUtilFile(sourceCodeDir, projectType);
