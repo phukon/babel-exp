@@ -30,6 +30,7 @@ function processFile(
   traversalStage,
   components
 ) {
+  let isMixpanelTrackerInFile = false;
   const code = fs.readFileSync(filePath, 'utf-8');
   const ast = parser.parse(code, {
     sourceType: 'unambiguous',

@@ -11,15 +11,15 @@ const isReactComponent = require('./isReactComponent.js');
 // const addDataAttribute = require('./addDataAttribute.js');
 const {
   createIterateUtilFile,
-  findSrcDirectory,
+  // findSrcDirectory,
 } = require('./createIterateUtil.js');
 const addWrapper = require('./addWrapper.js');
-const importWrapper = require('./importWrapper.js');
+// const importWrapper = require('./importWrapper.js');
 // const { executeTraversal } = require('./executeTraversal-old.js');
 
 const sourceCodeDir = './dump';
 const outputCodeDir = './dump';
-let srcDir;
+// let srcDir;
 let projectType = null;
 
 // Ensure the output directory exists
@@ -118,99 +118,99 @@ function processFile(filePath) {
 
   traverse(ast, visitor);
   isMixpanelTrackerInFile &&
-  importWrapper(ast, `${srcDir}${path.sep}IterateUtil`, filePath);
+    // importWrapper(ast, `${srcDir}${path.sep}IterateUtil`, filePath);
 
-  // let functionalMxCallComponents = executeTraversal(sourceCodeDir, outputCodeDir)
-  // console.log('🧧', functionalMxCallComponents)
-  // let combinedArray = functionalMxCallComponents.concat(components);
-  // console.log('🎟🎨🦺', combinedArray)
-  components.forEach(
-    ({ jsxOpeningElement, eventName, eventAttributes, isComponent }) => {
-      const attributes = jsxOpeningElement.node.attributes;
-      let iterateEvents = [];
-      const existingEventAttr = attributes.find(
-        (attr) => attr.name.name === 'injected_events'
-      );
+    // let functionalMxCallComponents = executeTraversal(sourceCodeDir, outputCodeDir)
+    // console.log('🧧', functionalMxCallComponents)
+    // let combinedArray = functionalMxCallComponents.concat(components);
+    // console.log('🎟🎨🦺', combinedArray)
+    components.forEach(
+      ({ jsxOpeningElement, eventName, eventAttributes, isComponent }) => {
+        const attributes = jsxOpeningElement.node.attributes;
+        let iterateEvents = [];
+        const existingEventAttr = attributes.find(
+          (attr) => attr.name.name === 'injected_events'
+        );
 
-      if (existingEventAttr) {
-        iterateEvents = JSON.parse(atob(existingEventAttr.value.value));
-        attributes.splice(attributes.indexOf(existingEventAttr), 1);
-      }
+        if (existingEventAttr) {
+          iterateEvents = JSON.parse(atob(existingEventAttr.value.value));
+          attributes.splice(attributes.indexOf(existingEventAttr), 1);
+        }
 
-      iterateEvents.push({
-        name: eventName,
-        attributes: eventAttributes,
-      });
-
-      const dataIterateEvents = types.jsxAttribute(
-        types.jsxIdentifier('injected_events'),
-        types.stringLiteral(btoa(JSON.stringify(iterateEvents)))
-      );
-
-      // Remove old 'data-iterateid' and 'data-iterateinjectedevents' attributes
-      // const existingIterateIdAttr = attributes.find(
-      //   (attr) => attr.name.name === 'data-iterateid'
-      // );
-      // if (existingIterateIdAttr) {
-      //   attributes.splice(attributes.indexOf(existingIterateIdAttr), 1);
-      // }
-      // const existingIterateInjectedEventsAttr = attributes.find(
-      //   (attr) => attr.name.name === 'data-iterateinjectedevents'
-      // );
-      // if (existingIterateInjectedEventsAttr) {
-      //   attributes.splice(
-      //     attributes.indexOf(existingIterateInjectedEventsAttr),
-      //     1
-      //   );
-      // }
-
-      if (isComponent) {
-        const componentName = getComponentName(jsxOpeningElement);
-        traverse(ast, {
-          JSXIdentifier(path) {
-            if (path.node.name === componentName) {
-              path.node.name = `Iterate${componentName}`;
-            }
-          },
+        iterateEvents.push({
+          name: eventName,
+          attributes: eventAttributes,
         });
 
-        let dataiterate = {
-          events: [iterateEvents],
-          filePath: filePath,
-        };
+        const dataIterateEvents = types.jsxAttribute(
+          types.jsxIdentifier('injected_events'),
+          types.stringLiteral(btoa(JSON.stringify(iterateEvents)))
+        );
 
-        let wrapper = {
-          originalName: componentName,
-          wrapperName: `Iterate${componentName}`,
-          dataiterate,
-        };
-
-        wrapperArray.push(wrapper); // this is not a pure function... will refactor later
-
-        // const targetComponentSource = findImportSource(ast, componentName);
-        // const targetDir = findSrc(filePath, targetComponentSource);
-        // const targetFileDir = findHtmlElement(targetDir);
-        // const targetFileCode = fs.readFileSync(targetFileDir, 'utf-8');
-        // const targetFileAst = parser.parse(targetFileCode, {
-        //   sourceType: 'unambiguous',
-        //   plugins: ['jsx', 'typescript'],
-        // });
-        // let modifiedAst = addDataAttribute(
-        //   targetFileAst,
-        //   btoa(JSON.stringify(iterateEvents)),
-        //   'some-id'
+        // Remove old 'data-iterateid' and 'data-iterateinjectedevents' attributes
+        // const existingIterateIdAttr = attributes.find(
+        //   (attr) => attr.name.name === 'data-iterateid'
         // );
-        // const { code: modifiedTargetFileCode } = generate(
-        //   modifiedAst,
-        //   {},
-        //   code
+        // if (existingIterateIdAttr) {
+        //   attributes.splice(attributes.indexOf(existingIterateIdAttr), 1);
+        // }
+        // const existingIterateInjectedEventsAttr = attributes.find(
+        //   (attr) => attr.name.name === 'data-iterateinjectedevents'
         // );
-        // fs.writeFileSync(targetFileDir, modifiedTargetFileCode);
-      } else {
-        attributes.push(dataIterateEvents);
+        // if (existingIterateInjectedEventsAttr) {
+        //   attributes.splice(
+        //     attributes.indexOf(existingIterateInjectedEventsAttr),
+        //     1
+        //   );
+        // }
+
+        if (isComponent) {
+          const componentName = getComponentName(jsxOpeningElement);
+          traverse(ast, {
+            JSXIdentifier(path) {
+              if (path.node.name === componentName) {
+                path.node.name = `Iterate${componentName}`;
+              }
+            },
+          });
+
+          let dataiterate = {
+            events: [iterateEvents],
+            filePath: filePath,
+          };
+
+          let wrapper = {
+            originalName: componentName,
+            wrapperName: `Iterate${componentName}`,
+            dataiterate,
+          };
+
+          wrapperArray.push(wrapper); // this is not a pure function... will refactor later
+
+          // const targetComponentSource = findImportSource(ast, componentName);
+          // const targetDir = findSrc(filePath, targetComponentSource);
+          // const targetFileDir = findHtmlElement(targetDir);
+          // const targetFileCode = fs.readFileSync(targetFileDir, 'utf-8');
+          // const targetFileAst = parser.parse(targetFileCode, {
+          //   sourceType: 'unambiguous',
+          //   plugins: ['jsx', 'typescript'],
+          // });
+          // let modifiedAst = addDataAttribute(
+          //   targetFileAst,
+          //   btoa(JSON.stringify(iterateEvents)),
+          //   'some-id'
+          // );
+          // const { code: modifiedTargetFileCode } = generate(
+          //   modifiedAst,
+          //   {},
+          //   code
+          // );
+          // fs.writeFileSync(targetFileDir, modifiedTargetFileCode);
+        } else {
+          attributes.push(dataIterateEvents);
+        }
       }
-    }
-  );
+    );
   wrapperArray.forEach(({ originalName, wrapperName, dataiterate }) => {
     // console.log(dataiterate);
     addWrapper(
@@ -237,7 +237,7 @@ function processFile(filePath) {
 }
 
 // our component wrapper util resides here
-srcDir = findSrcDirectory(sourceCodeDir); // finds the 'src' dir in a project
+// srcDir = findSrcDirectory(sourceCodeDir);
 // console.log('🎁', srcDir);
 traverseDirectory(sourceCodeDir);
 createIterateUtilFile(sourceCodeDir, projectType);

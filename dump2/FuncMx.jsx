@@ -1,8 +1,6 @@
 import React from 'react';
-const IterateLol = IterateWrapper(Lol, {
-  dataiterate:
-    'eyJldmVudHMiOltbeyJuYW1lIjoiQnV0dG9uIENsaWNrZWQiLCJhdHRyaWJ1dGVzIjp7ImJ1dHRvbkNvbG9yIjoicmVkIiwiYnV0dG9uU2l6ZSI6ImxhcmdlIn19XV0sImZpbGVQYXRoIjoiZHVtcDJcXEZ1bmNNeC5qc3gifQ==',
-});
+import Lol from '../dump/lol';
+import IterateWrapper from "../src/IterateWrapper";
 const ExampleComponent = () => {
   const trackEvent = (eventName, eventAttributes) => {
     mixpanel.track(eventName, eventAttributes);
@@ -11,14 +9,13 @@ const ExampleComponent = () => {
     const eventName = 'Button Clicked';
     const eventAttributes = {
       buttonColor: 'red',
-      buttonSize: 'large',
+      buttonSize: 'large'
     };
     trackEvent(eventName, eventAttributes);
   };
-  return (
-    <div>
-      <IterateLol onClick={handleClick}>Click Me</IterateLol>
-    </div>
-  );
+  return <div>
+      <Lol onClick={handleClick}>Click Me</Lol>
+      <div onClick={handleClick}>Click Me</div>
+    </div>;
 };
 export default ExampleComponent;
