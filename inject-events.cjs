@@ -17,8 +17,8 @@ const addWrapper = require('./addWrapper.js');
 // const importWrapper = require('./importWrapper.js');
 // const { executeTraversal } = require('./executeTraversal-old.js');
 
-const sourceCodeDir = '../flux';
-const outputCodeDir = '../flux';
+const sourceCodeDir = './dep-ser4';
+const outputCodeDir = './dep-ser4';
 // let srcDir;
 let projectType = null;
 
@@ -108,9 +108,9 @@ function processFile(filePath) {
           const existingComponent = components.find(
             (component) =>
               component.jsxOpeningElement.node.name.name ===
-                jsxEl.node.name.name &&
+                jsxOpeningElement.node.name.name &&
               JSON.stringify(component.eventAttributes) ===
-                JSON.stringify(mp[path.node.loc.identifierName].eventAttributes)
+                JSON.stringify(eventAttributes)
           );
 
           if (!existingComponent) {

@@ -4,8 +4,8 @@ const parser = require('@babel/parser');
 const traverse = require('@babel/traverse').default;
 const generate = require('@babel/generator').default;
 const types = require('@babel/types');
-
-const directoryPath = '../flux';
+const { findSrcDirectory } = require('./createIterateUtil');
+const directoryPath = './dep-ser4';
 
 function findFilesInDir(dir, fileExtensions, fileList = []) {
   const files = fs.readdirSync(dir);
@@ -49,6 +49,12 @@ function importWrapper(targetAst, to, from) {
   let ast = targetAst;
   let relativePath = path.relative(from, to).replace(/\\/g, '/');
 
+  const parts = relativePath.split('/');
+  if (parts.length > 1) {
+    parts.splice(-2, 1); // Removing one level from the constructed relative path. A very scrappy fix.
+  }
+  relativePath = parts.join('/');
+
   const importName = 'IterateWrapper';
 
   const importDefaultSpecifier = types.importDefaultSpecifier(
@@ -83,10 +89,14 @@ function importWrapper(targetAst, to, from) {
   }
 }
 
+
 const fileExtensions = ['.jsx', '.tsx'];
 const files = findFilesInDir(directoryPath, fileExtensions);
+let srcDir = findSrcDirectory(directoryPath);
 
 files.forEach((filePath) => {
+  // console.log(`🎃 ${srcDir}/IterateUtil`, filePath);
+  // console.log('🚙', path.relative(filePath, `${srcDir}/IterateUtil`));
   try {
     let code = fs.readFileSync(filePath, 'utf-8');
     const ast = parser.parse(code, {
@@ -95,7 +105,7 @@ files.forEach((filePath) => {
     });
 
     if (hasMixpanelTracker(ast)) {
-      importWrapper(ast, '../flux/src/IterateUtil', filePath);
+      importWrapper(ast, `${srcDir}/IterateUtil`, filePath);
       const { code: updatedCode } = generate(ast);
       fs.writeFileSync(filePath, updatedCode, 'utf-8');
       console.log(`Imported IterateWrapper in: ${filePath}`);

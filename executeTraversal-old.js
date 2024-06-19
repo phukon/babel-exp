@@ -449,5 +449,5 @@ module.exports = {
   executeTraversal,
 };
 
-executeTraversal('../flux', '../flux');
+executeTraversal('./dep-ser4', './dep-ser4');
 // console.log(p);
