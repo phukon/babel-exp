@@ -5,7 +5,7 @@ const traverse = require('@babel/traverse').default;
 const generate = require('@babel/generator').default;
 const types = require('@babel/types');
 
-const directoryPath = './dump2';
+const directoryPath = '../flux';
 
 function findFilesInDir(dir, fileExtensions, fileList = []) {
   const files = fs.readdirSync(dir);
@@ -15,7 +15,9 @@ function findFilesInDir(dir, fileExtensions, fileList = []) {
     const stat = fs.statSync(filePath);
 
     if (stat.isDirectory()) {
-      findFilesInDir(filePath, fileExtensions, fileList);
+      if (path.basename(filePath) !== 'node_modules') {
+        findFilesInDir(filePath, fileExtensions, fileList);
+      }
     } else {
       if (fileExtensions.includes(path.extname(file))) {
         fileList.push(filePath);
@@ -85,16 +87,20 @@ const fileExtensions = ['.jsx', '.tsx'];
 const files = findFilesInDir(directoryPath, fileExtensions);
 
 files.forEach((filePath) => {
-  let code = fs.readFileSync(filePath, 'utf-8');
-  const ast = parser.parse(code, {
-    sourceType: 'module',
-    plugins: ['jsx'],
-  });
+  try {
+    let code = fs.readFileSync(filePath, 'utf-8');
+    const ast = parser.parse(code, {
+      sourceType: 'unambiguous',
+      plugins: ['jsx', 'typescript'],
+    });
 
-  if (hasMixpanelTracker(ast)) {
-    importWrapper(ast, './dump2/src/IterateWrapper', filePath);
-    const { code: updatedCode } = generate(ast);
-    fs.writeFileSync(filePath, updatedCode, 'utf-8');
-    console.log(`Imported IterateWrapper in : ${filePath}`);
+    if (hasMixpanelTracker(ast)) {
+      importWrapper(ast, '../flux/src/IterateUtil', filePath);
+      const { code: updatedCode } = generate(ast);
+      fs.writeFileSync(filePath, updatedCode, 'utf-8');
+      console.log(`Imported IterateWrapper in: ${filePath}`);
+    }
+  } catch (err) {
+    console.error(`Error processing ${filePath}: ${err.message}`);
   }
 });

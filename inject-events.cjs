@@ -17,8 +17,8 @@ const addWrapper = require('./addWrapper.js');
 // const importWrapper = require('./importWrapper.js');
 // const { executeTraversal } = require('./executeTraversal-old.js');
 
-const sourceCodeDir = './dump';
-const outputCodeDir = './dump';
+const sourceCodeDir = '../flux';
+const outputCodeDir = '../flux';
 // let srcDir;
 let projectType = null;
 
@@ -105,12 +105,22 @@ function processFile(filePath) {
         if (jsxOpeningElement && jsxOpeningElement.node) {
           const isComponent = isReactComponent(jsxOpeningElement);
           // can refactor here
-          components.push({
-            jsxOpeningElement,
-            eventName,
-            eventAttributes,
-            isComponent,
-          });
+          const existingComponent = components.find(
+            (component) =>
+              component.jsxOpeningElement.node.name.name ===
+                jsxEl.node.name.name &&
+              JSON.stringify(component.eventAttributes) ===
+                JSON.stringify(mp[path.node.loc.identifierName].eventAttributes)
+          );
+
+          if (!existingComponent) {
+            components.push({
+              jsxOpeningElement,
+              eventName,
+              eventAttributes,
+              isComponent,
+            });
+          }
         }
       }
     },

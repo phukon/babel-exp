@@ -370,13 +370,25 @@ function thirdProcessFile(filePath, outputCodeDir) {
                 (attr) => attr.name.name === 'injected_events'
               );
 
-              components.push({
-                jsxOpeningElement: jsxEl,
-                eventName: mp[path.node.loc.identifierName].eventName,
-                eventAttributes:
-                  mp[path.node.loc.identifierName].eventAttributes,
-                isComponent,
-              });
+              const existingComponent = components.find(
+                (component) =>
+                  component.jsxOpeningElement.node.name.name ===
+                    jsxEl.node.name.name &&
+                  JSON.stringify(component.eventAttributes) ===
+                    JSON.stringify(
+                      mp[path.node.loc.identifierName].eventAttributes
+                    )
+              );
+
+              if (!existingComponent) {
+                components.push({
+                  jsxOpeningElement: jsxEl,
+                  eventName: mp[path.node.loc.identifierName].eventName,
+                  eventAttributes:
+                    mp[path.node.loc.identifierName].eventAttributes,
+                  isComponent,
+                });
+              }
 
               if (isComponent) {
                 return;
@@ -437,5 +449,5 @@ module.exports = {
   executeTraversal,
 };
 
-let p = executeTraversal('./dump2', './dump2');
-console.log(p);
+executeTraversal('../flux', '../flux');
+// console.log(p);
