@@ -15,6 +15,7 @@ const {
 } = require('./createIterateUtil.js');
 const addWrapper = require('./addWrapper.js');
 const importWrapper = require('./importWrapper.js');
+// const { executeTraversal } = require('./executeTraversal-old.js');
 
 const sourceCodeDir = './dump';
 const outputCodeDir = './dump';
@@ -72,7 +73,7 @@ function processFile(filePath) {
   });
   // importWrapper(ast, `${srcDir}${path.sep}IterateUtil.jsx`, filePath);
 
-  const components = [];
+  let components = [];
 
   const visitor = {
     CallExpression(path) {
@@ -103,7 +104,7 @@ function processFile(filePath) {
 
         if (jsxOpeningElement && jsxOpeningElement.node) {
           const isComponent = isReactComponent(jsxOpeningElement);
-
+          // can refactor here
           components.push({
             jsxOpeningElement,
             eventName,
@@ -117,8 +118,12 @@ function processFile(filePath) {
 
   traverse(ast, visitor);
   isMixpanelTrackerInFile &&
-    importWrapper(ast, `${srcDir}${path.sep}IterateUtil`, filePath);
+  importWrapper(ast, `${srcDir}${path.sep}IterateUtil`, filePath);
 
+  // let functionalMxCallComponents = executeTraversal(sourceCodeDir, outputCodeDir)
+  // console.log('🧧', functionalMxCallComponents)
+  // let combinedArray = functionalMxCallComponents.concat(components);
+  // console.log('🎟🎨🦺', combinedArray)
   components.forEach(
     ({ jsxOpeningElement, eventName, eventAttributes, isComponent }) => {
       const attributes = jsxOpeningElement.node.attributes;
@@ -231,7 +236,7 @@ function processFile(filePath) {
   console.log(`Processed: ${filePath}`);
 }
 
-// Are component wrapper resides here
+// our component wrapper util resides here
 srcDir = findSrcDirectory(sourceCodeDir); // finds the 'src' dir in a project
 // console.log('🎁', srcDir);
 traverseDirectory(sourceCodeDir);

@@ -5,9 +5,9 @@ const traverse = require('@babel/traverse').default;
 const generate = require('@babel/generator').default;
 const types = require('@babel/types');
 const isReactComponent = require('./isReactComponent');
+const addWrapper = require('./addWrapper');
 
 let mp = new Map();
-let eventsRef;
 
 function ensureOutputDirectory(outputDir) {
   if (!fs.existsSync(outputDir)) {
@@ -15,7 +15,21 @@ function ensureOutputDirectory(outputDir) {
   }
 }
 
-function processFile(filePath, visitor, outputCodeDir) {
+function getComponentName(path) {
+  const name = path.node.name;
+  if (name?.type === 'JSXIdentifier') {
+    const tagName = name.name;
+    return tagName;
+  }
+}
+
+function processFile(
+  filePath,
+  visitor,
+  outputCodeDir,
+  traversalStage,
+  components
+) {
   const code = fs.readFileSync(filePath, 'utf-8');
   const ast = parser.parse(code, {
     sourceType: 'unambiguous',
@@ -23,6 +37,68 @@ function processFile(filePath, visitor, outputCodeDir) {
   });
 
   traverse(ast, visitor);
+
+  if (traversalStage === 3) {
+    let wrapperArray = [];
+    components.forEach(
+      ({ jsxOpeningElement, eventName, eventAttributes, isComponent }) => {
+        const attributes = jsxOpeningElement.node.attributes;
+        let iterateEvents = [];
+        const existingEventAttr = attributes.find(
+          (attr) => attr.name.name === 'injected_events'
+        );
+
+        if (existingEventAttr) {
+          iterateEvents = JSON.parse(atob(existingEventAttr.value.value));
+          attributes.splice(attributes.indexOf(existingEventAttr), 1);
+        }
+
+        iterateEvents.push({
+          name: eventName,
+          attributes: eventAttributes,
+        });
+
+        const dataIterateEvents = types.jsxAttribute(
+          types.jsxIdentifier('injected_events'),
+          types.stringLiteral(btoa(JSON.stringify(iterateEvents)))
+        );
+
+        if (isComponent) {
+          const componentName = getComponentName(jsxOpeningElement);
+          traverse(ast, {
+            JSXIdentifier(path) {
+              if (path.node.name === componentName) {
+                path.node.name = `Iterate${componentName}`;
+              }
+            },
+          });
+
+          let dataiterate = {
+            events: [iterateEvents],
+            filePath: filePath,
+          };
+
+          let wrapper = {
+            originalName: componentName,
+            wrapperName: `Iterate${componentName}`,
+            dataiterate,
+          };
+
+          wrapperArray.push(wrapper); // this is not a pure function... will refactor later
+        } else {
+          attributes.push(dataIterateEvents);
+        }
+      }
+    );
+    wrapperArray.forEach(({ originalName, wrapperName, dataiterate }) => {
+      addWrapper(
+        ast,
+        originalName,
+        wrapperName,
+        btoa(JSON.stringify(dataiterate))
+      );
+    });
+  }
 
   const { code: modifiedCode } = generate(ast, {}, code);
   const outputFilePath = path.join(
@@ -117,8 +193,8 @@ function firstProcessFile(filePath, outputCodeDir) {
           } else {
             eventAttributes = {};
           }
-          console.log(`Event tracked: `, eventName);
-          console.log('Attributes:', eventAttributes);
+          // console.log(`Event tracked: `, eventName);
+          // console.log('Attributes:', eventAttributes);
 
           let jsxElement = path;
           while (jsxElement && jsxElement.node.type !== 'ReturnStatement') {
@@ -126,10 +202,10 @@ function firstProcessFile(filePath, outputCodeDir) {
               jsxElement = jsxElement.parentPath;
               if (jsxElement.node.type === 'JSXExpressionContainer') {
               } else {
-                console.log(
-                  'Name of el above arrowFn: ',
-                  jsxElement?.node?.id?.name
-                );
+                // console.log(
+                //   'Name of el above arrowFn: ',
+                //   jsxElement?.node?.id?.name
+                // );
                 mp[jsxElement?.node?.id?.name] = {
                   eventName: eventName,
                   eventAttributes,
@@ -144,7 +220,7 @@ function firstProcessFile(filePath, outputCodeDir) {
       }
     },
   };
-  processFile(filePath, visitor, outputCodeDir);
+  processFile(filePath, visitor, outputCodeDir, 1);
 }
 
 function secondProcessFile(filePath, outputCodeDir) {
@@ -175,12 +251,12 @@ function secondProcessFile(filePath, outputCodeDir) {
                     path.node.arguments[nameInd].name
                 ) {
                   evName = el.declarations[0]?.init.value;
-                  console.log(
-                    'Var Name:',
-                    el.declarations[0]?.id.name,
-                    ' Value:',
-                    evName
-                  );
+                  // console.log(
+                  //   'Var Name:',
+                  //   el.declarations[0]?.id.name,
+                  //   ' Value:',
+                  //   evName
+                  // );
                 }
               });
             }
@@ -203,19 +279,19 @@ function secondProcessFile(filePath, outputCodeDir) {
                   evAttr = el?.declarations[0]?.init;
                   if (evAttr?.type === 'ObjectExpression') {
                     evAttr = evAttr.properties.reduce((acc, prop) => {
-                      console.log('prop key name: ', prop.key.name);
+                      // console.log('prop key name: ', prop.key.name);
                       acc[prop.key.name] =
                         prop.value.value || prop.value.name || prop.value.type;
-                      console.log('prop value: ', acc[prop.key.name]);
+                      // console.log('prop value: ', acc[prop.key.name]);
                       return acc;
                     }, {});
                   }
-                  console.log(
-                    'Attribute name: ',
-                    el?.declarations[0]?.id?.name,
-                    ' Attributes: ',
-                    JSON.stringify(evAttr)
-                  );
+                  // console.log(
+                  //   'Attribute name: ',
+                  //   el?.declarations[0]?.id?.name,
+                  //   ' Attributes: ',
+                  //   JSON.stringify(evAttr)
+                  // );
                 }
               });
             }
@@ -226,14 +302,14 @@ function secondProcessFile(filePath, outputCodeDir) {
           evAttr = path?.node?.arguments[attrInd];
           if (evAttr?.type === 'ObjectExpression') {
             evAttr = evAttr.properties.reduce((acc, prop) => {
-              console.log('prop key name: ', prop.key.name);
+              // console.log('prop key name: ', prop.key.name);
               acc[prop.key.name] =
                 prop.value.value || prop.value.name || prop.value.type;
-              console.log('prop value: ', acc[prop.key.name]);
+              // console.log('prop value: ', acc[prop.key.name]);
               return acc;
             }, {});
           }
-          console.log('Inline Attributes: ', JSON.stringify(evAttr));
+          // console.log('Inline Attributes: ', JSON.stringify(evAttr));
         }
 
         let cf = path;
@@ -268,36 +344,42 @@ function secondProcessFile(filePath, outputCodeDir) {
       }
     },
   };
-  processFile(filePath, visitor, outputCodeDir);
+  processFile(filePath, visitor, outputCodeDir, 2);
 }
 
 function thirdProcessFile(filePath, outputCodeDir) {
-  let reactComponent;
-  let iterateEvents;
+  let components = [];
   const visitor = {
     Identifier(path) {
       if (mp[path.node.loc.identifierName]) {
-        // console.log('🎈', path.node.loc.identifierName);
         let jsxEl = path;
         while (jsxEl && jsxEl.node.type !== 'JSXOpeningElement') {
           jsxEl = jsxEl.parentPath;
           if (jsxEl && jsxEl.node.type === 'JSXOpeningElement') {
-            console.log(
-              path.node.loc.identifierName,
-              ' in ',
-              jsxEl?.node?.name?.name
-            );
-            console.log('Executed ', jsxEl.node.type);
+            // console.log(
+            //   path.node.loc.identifierName,
+            //   ' in ',
+            //   jsxEl?.node?.name?.name
+            // );
+            // console.log('Executed ', jsxEl.node.type);
             if (jsxEl && jsxEl.node.type === 'JSXOpeningElement') {
+              const isComponent = isReactComponent(jsxEl);
               const attributes = jsxEl.node.attributes;
-              iterateEvents = attributes.filter(
+              let iterateEvents = attributes.filter(
                 (attr) => attr.name.name === 'injected_events'
               );
-              // console.log('⚡', jsxEl.node);
-              if (isReactComponent(jsxEl)) {
-                reactComponent = true;
-                components
-                } else {
+
+              components.push({
+                jsxOpeningElement: jsxEl,
+                eventName: mp[path.node.loc.identifierName].eventName,
+                eventAttributes:
+                  mp[path.node.loc.identifierName].eventAttributes,
+                isComponent,
+              });
+
+              if (isComponent) {
+                return;
+              } else {
                 if (iterateEvents.length > 0) {
                   iterateEvents = JSON.parse(
                     atob(iterateEvents[0].value.value)
@@ -314,7 +396,6 @@ function thirdProcessFile(filePath, outputCodeDir) {
                   types.jsxIdentifier('injected_events'),
                   types.stringLiteral(btoa(JSON.stringify(iterateEvents)))
                 );
-                console.log('🦺', iterateEvents)
 
                 attributes.forEach((attr, index) => {
                   if (attr.name.name === 'injected_events') {
@@ -331,12 +412,7 @@ function thirdProcessFile(filePath, outputCodeDir) {
       }
     },
   };
-  processFile(filePath, visitor, outputCodeDir);
-  if (reactComponent) {
-    eventsRef = iterateEvents
-  } else {
-    eventsRef = 1
-  }
+  processFile(filePath, visitor, outputCodeDir, 3, components);
 }
 
 function executeTraversal(sourceCodeDir, outputCodeDir) {
@@ -345,7 +421,7 @@ function executeTraversal(sourceCodeDir, outputCodeDir) {
   console.log('Executing First Traversal...');
   traverseDirectory(sourceCodeDir, firstProcessFile, outputCodeDir);
   console.log('First Traversal done');
-  console.log(mp);
+  // console.log(mp);
 
   console.log('Executing Second Traversal...');
   traverseDirectory(sourceCodeDir, secondProcessFile, outputCodeDir);
@@ -354,7 +430,6 @@ function executeTraversal(sourceCodeDir, outputCodeDir) {
   console.log('Executing Third Traversal...');
   traverseDirectory(sourceCodeDir, thirdProcessFile, outputCodeDir);
   console.log('Third Traversal done');
-  return eventsRef;
 }
 
 module.exports = {
@@ -362,4 +437,4 @@ module.exports = {
 };
 
 let p = executeTraversal('./dump2', './dump2');
-console.log('🎆 : ', p);
+console.log(p);
