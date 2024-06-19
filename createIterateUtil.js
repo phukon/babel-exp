@@ -4,6 +4,7 @@ const path = require('path');
 function findSrcDirectory(dir) {
   const files = fs.readdirSync(dir);
   for (const file of files) {
+    if (file === 'node_modules') continue;
     const filePath = path.join(dir, file);
     if (fs.statSync(filePath).isDirectory()) {
       if (file === 'src') {
@@ -45,7 +46,6 @@ const IterateWrapper = (WrappedComponent, customAttributes) => {
 
     addAttributes() {
       const domNode = ReactDOM.findDOMNode(this);
-      console.log('🎟', domNode);
 
       if (domNode) {
         this.addAttributesToDeepestIntrinsicElement(domNode);
@@ -93,7 +93,6 @@ function IterateWrapper<T>(WrappedComponent: ComponentType<T>, customAttributes:
 
     addAttributes() {
       const domNode = ReactDOM.findDOMNode(this) as HTMLElement | null;
-      console.log('🎟', domNode);
 
       if (domNode) {
         this.addAttributesToDeepestIntrinsicElement(domNode);
