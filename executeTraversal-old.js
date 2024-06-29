@@ -483,7 +483,7 @@ async function thirdProcessFile(filePath, outputCodeDir) {
   processFile(filePath, visitor, outputCodeDir, 3, components);
   if (fileEvents.length !== 0) {
     try {
-      const modifiedEvents = this.events.map((event) => {
+      const modifiedEvents = fileEvents.map((event) => {
         if (Object.keys(event.attributes).length === 0) {
           return { ...event, attributes: null }; // todo platforms
         }
