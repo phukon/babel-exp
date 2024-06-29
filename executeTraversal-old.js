@@ -6,20 +6,25 @@ const generate = require('@babel/generator').default;
 const types = require('@babel/types');
 const isReactComponent = require('./isReactComponent');
 const addWrapper = require('./addWrapper');
+const { randomUUID } = require('crypto');
+const axios = require('axios');
 
 let mp = new Map();
 
 function ensureOutputDirectory(outputDir) {
   if (!fs.existsSync(outputDir)) {
-    fs.mkdirSync(outputDir, { recursive: true });
+    try {
+      fs.mkdirSync(outputDir, { recursive: true });
+    } catch (error) {
+      console.error(`Error creating directory ${outputDir}:`, error);
+    }
   }
 }
 
 function getComponentName(path) {
   const name = path.node.name;
   if (name?.type === 'JSXIdentifier') {
-    const tagName = name.name;
-    return tagName;
+    return name.name;
   }
 }
 
@@ -30,14 +35,31 @@ function processFile(
   traversalStage,
   components
 ) {
-  let isMixpanelTrackerInFile = false;
-  const code = fs.readFileSync(filePath, 'utf-8');
-  const ast = parser.parse(code, {
-    sourceType: 'unambiguous',
-    plugins: ['jsx', 'typescript'],
-  });
+  let code;
+  try {
+    code = fs.readFileSync(filePath, 'utf-8');
+  } catch (error) {
+    console.error(`Error reading file ${filePath}:`, error);
+    return;
+  }
 
-  traverse(ast, visitor);
+  let ast;
+  try {
+    ast = parser.parse(code, {
+      sourceType: 'unambiguous',
+      plugins: ['jsx', 'typescript'],
+    });
+  } catch (error) {
+    console.error(`Error parsing code in file ${filePath}:`, error);
+    return;
+  }
+
+  try {
+    traverse(ast, visitor);
+  } catch (error) {
+    console.error(`Error traversing AST in file ${filePath}:`, error);
+    return;
+  }
 
   if (traversalStage === 3) {
     let wrapperArray = [];
@@ -50,8 +72,15 @@ function processFile(
         );
 
         if (existingEventAttr) {
-          iterateEvents = JSON.parse(atob(existingEventAttr.value.value));
-          attributes.splice(attributes.indexOf(existingEventAttr), 1);
+          try {
+            iterateEvents = JSON.parse(atob(existingEventAttr.value.value));
+            attributes.splice(attributes.indexOf(existingEventAttr), 1);
+          } catch (error) {
+            console.error(
+              `Error decoding existing event attributes in file ${filePath}:`,
+              error
+            );
+          }
         }
 
         iterateEvents.push({
@@ -66,17 +95,26 @@ function processFile(
 
         if (isComponent) {
           const componentName = getComponentName(jsxOpeningElement);
-          traverse(ast, {
-            JSXIdentifier(path) {
-              if (path.node.name === componentName) {
-                path.node.name = `Iterate${componentName}`;
-              }
-            },
-          });
+          try {
+            traverse(ast, {
+              JSXIdentifier(path) {
+                if (path.node.name === componentName) {
+                  path.node.name = `Iterate${componentName}`;
+                }
+              },
+            });
+          } catch (error) {
+            console.error(
+              `Error renaming component ${componentName} in file ${filePath}:`,
+              error
+            );
+          }
 
+          const uuid = randomUUID();
           let dataiterate = {
             events: [iterateEvents],
             filePath: filePath,
+            id: uuid,
           };
 
           let wrapper = {
@@ -85,23 +123,40 @@ function processFile(
             dataiterate,
           };
 
-          wrapperArray.push(wrapper); // this is not a pure function... will refactor later
+          wrapperArray.push(wrapper);
         } else {
           attributes.push(dataIterateEvents);
         }
       }
     );
     wrapperArray.forEach(({ originalName, wrapperName, dataiterate }) => {
-      addWrapper(
-        ast,
-        originalName,
-        wrapperName,
-        btoa(JSON.stringify(dataiterate))
-      );
+      try {
+        addWrapper(
+          ast,
+          originalName,
+          wrapperName,
+          btoa(JSON.stringify(dataiterate))
+        );
+      } catch (error) {
+        console.error(
+          `Error adding wrapper for component ${originalName} in file ${filePath}:`,
+          error
+        );
+      }
     });
   }
 
-  const { code: modifiedCode } = generate(ast, {}, code);
+  let modifiedCode;
+  try {
+    modifiedCode = generate(ast, {}, code).code;
+  } catch (error) {
+    console.error(
+      `Error generating modified code for file ${filePath}:`,
+      error
+    );
+    return;
+  }
+
   const outputFilePath = path.join(
     outputCodeDir,
     path.relative(outputCodeDir, filePath)
@@ -109,23 +164,43 @@ function processFile(
   const outputDirPath = path.dirname(outputFilePath);
 
   ensureOutputDirectory(outputDirPath);
-  fs.writeFileSync(outputFilePath, modifiedCode);
-  console.log(`Processed: ${filePath}`);
+
+  try {
+    fs.writeFileSync(outputFilePath, modifiedCode);
+    console.log(`Processed: ${filePath}`);
+  } catch (error) {
+    console.error(`Error writing to file ${outputFilePath}:`, error);
+  }
 }
 
-function traverseDirectory(dir, fileProcessor, outputCodeDir) {
-  const files = fs.readdirSync(dir);
-  files.forEach((file) => {
+async function traverseDirectory(dir, fileProcessor, outputCodeDir) {
+  let files;
+  try {
+    files = fs.readdirSync(dir);
+  } catch (error) {
+    console.error(`Error reading directory ${dir}:`, error);
+    return;
+  }
+
+  for (const file of files) {
     const filePath = path.join(dir, file);
     if (file === 'node_modules') {
-      return;
+      continue;
     }
-    if (fs.statSync(filePath).isDirectory()) {
-      traverseDirectory(filePath, fileProcessor, outputCodeDir);
+    let stat;
+    try {
+      stat = fs.statSync(filePath);
+    } catch (error) {
+      console.error(`Error getting stats for file ${filePath}:`, error);
+      continue;
+    }
+
+    if (stat.isDirectory()) {
+      await traverseDirectory(filePath, fileProcessor, outputCodeDir);
     } else if (['.jsx', '.tsx'].includes(path.extname(filePath))) {
-      fileProcessor(filePath, outputCodeDir);
+      await fileProcessor(filePath, outputCodeDir);
     }
-  });
+  }
 }
 
 function firstProcessFile(filePath, outputCodeDir) {
@@ -194,8 +269,6 @@ function firstProcessFile(filePath, outputCodeDir) {
           } else {
             eventAttributes = {};
           }
-          // console.log(`Event tracked: `, eventName);
-          // console.log('Attributes:', eventAttributes);
 
           let jsxElement = path;
           while (jsxElement && jsxElement.node.type !== 'ReturnStatement') {
@@ -203,13 +276,8 @@ function firstProcessFile(filePath, outputCodeDir) {
               jsxElement = jsxElement.parentPath;
               if (jsxElement.node.type === 'JSXExpressionContainer') {
               } else {
-                // console.log(
-                //   'Name of el above arrowFn: ',
-                //   jsxElement?.node?.id?.name
-                // );
                 mp[jsxElement?.node?.id?.name] = {
                   eventName: eventName,
-                  eventAttributes,
                   eventAttributes,
                 };
                 continue;
@@ -252,12 +320,6 @@ function secondProcessFile(filePath, outputCodeDir) {
                     path.node.arguments[nameInd].name
                 ) {
                   evName = el.declarations[0]?.init.value;
-                  // console.log(
-                  //   'Var Name:',
-                  //   el.declarations[0]?.id.name,
-                  //   ' Value:',
-                  //   evName
-                  // );
                 }
               });
             }
@@ -280,19 +342,11 @@ function secondProcessFile(filePath, outputCodeDir) {
                   evAttr = el?.declarations[0]?.init;
                   if (evAttr?.type === 'ObjectExpression') {
                     evAttr = evAttr.properties.reduce((acc, prop) => {
-                      // console.log('prop key name: ', prop.key.name);
                       acc[prop.key.name] =
                         prop.value.value || prop.value.name || prop.value.type;
-                      // console.log('prop value: ', acc[prop.key.name]);
                       return acc;
                     }, {});
                   }
-                  // console.log(
-                  //   'Attribute name: ',
-                  //   el?.declarations[0]?.id?.name,
-                  //   ' Attributes: ',
-                  //   JSON.stringify(evAttr)
-                  // );
                 }
               });
             }
@@ -303,14 +357,11 @@ function secondProcessFile(filePath, outputCodeDir) {
           evAttr = path?.node?.arguments[attrInd];
           if (evAttr?.type === 'ObjectExpression') {
             evAttr = evAttr.properties.reduce((acc, prop) => {
-              // console.log('prop key name: ', prop.key.name);
               acc[prop.key.name] =
                 prop.value.value || prop.value.name || prop.value.type;
-              // console.log('prop value: ', acc[prop.key.name]);
               return acc;
             }, {});
           }
-          // console.log('Inline Attributes: ', JSON.stringify(evAttr));
         }
 
         let cf = path;
@@ -348,8 +399,9 @@ function secondProcessFile(filePath, outputCodeDir) {
   processFile(filePath, visitor, outputCodeDir, 2);
 }
 
-function thirdProcessFile(filePath, outputCodeDir) {
+async function thirdProcessFile(filePath, outputCodeDir) {
   let components = [];
+  let fileEvents = [];
   const visitor = {
     Identifier(path) {
       if (mp[path.node.loc.identifierName]) {
@@ -357,12 +409,10 @@ function thirdProcessFile(filePath, outputCodeDir) {
         while (jsxEl && jsxEl.node.type !== 'JSXOpeningElement') {
           jsxEl = jsxEl.parentPath;
           if (jsxEl && jsxEl.node.type === 'JSXOpeningElement') {
-            // console.log(
-            //   path.node.loc.identifierName,
-            //   ' in ',
-            //   jsxEl?.node?.name?.name
-            // );
-            // console.log('Executed ', jsxEl.node.type);
+            if (jsxEl.node.name.name.startsWith('Iterate')) {
+              return;
+            }
+
             if (jsxEl && jsxEl.node.type === 'JSXOpeningElement') {
               const isComponent = isReactComponent(jsxEl);
               const attributes = jsxEl.node.attributes;
@@ -387,6 +437,11 @@ function thirdProcessFile(filePath, outputCodeDir) {
                   eventAttributes:
                     mp[path.node.loc.identifierName].eventAttributes,
                   isComponent,
+                });
+
+                fileEvents.push({
+                  name: mp[path.node.loc.identifierName].eventName,
+                  attributes: mp[path.node.loc.identifierName].eventAttributes,
                 });
               }
 
@@ -426,22 +481,43 @@ function thirdProcessFile(filePath, outputCodeDir) {
     },
   };
   processFile(filePath, visitor, outputCodeDir, 3, components);
+  if (fileEvents.length !== 0) {
+    try {
+      const modifiedEvents = this.events.map((event) => {
+        if (Object.keys(event.attributes).length === 0) {
+          return { ...event, attributes: null }; // todo platforms
+        }
+        return event;
+      });
+
+      const response = await axios.post('http://localhost:4000/pushevents', {
+        events: modifiedEvents,
+        filePath: filePath,
+        is_manual: false,
+      });
+      console.log(`API request successful for file: ${filePath}`);
+      console.log('Response:', response.data);
+    } catch (error) {
+      console.error(`Error making API request for file: ${filePath}`, error);
+    }
+  } else {
+    console.log(`Skipping API request for file : ${filePath}`);
+  }
 }
 
-function executeTraversal(sourceCodeDir, outputCodeDir) {
+async function executeTraversal(sourceCodeDir, outputCodeDir) {
   ensureOutputDirectory(outputCodeDir);
 
   console.log('Executing First Traversal...');
   traverseDirectory(sourceCodeDir, firstProcessFile, outputCodeDir);
   console.log('First Traversal done');
-  // console.log(mp);
 
   console.log('Executing Second Traversal...');
   traverseDirectory(sourceCodeDir, secondProcessFile, outputCodeDir);
   console.log('Second Traversal done');
 
   console.log('Executing Third Traversal...');
-  traverseDirectory(sourceCodeDir, thirdProcessFile, outputCodeDir);
+  await traverseDirectory(sourceCodeDir, thirdProcessFile, outputCodeDir);
   console.log('Third Traversal done');
 }
 
@@ -449,5 +525,4 @@ module.exports = {
   executeTraversal,
 };
 
-executeTraversal('./dep-ser4', './dep-ser4');
-// console.log(p);
+executeTraversal('../flux', '../flux');
