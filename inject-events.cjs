@@ -4,9 +4,9 @@ const parser = require('@babel/parser');
 const traverse = require('@babel/traverse').default;
 const generate = require('@babel/generator').default;
 const types = require('@babel/types');
-const isReactComponent = require('../utils/isReactComponent.js');
-const { createIterateUtilFile } = require('../utils/createIterateUtil.js');
-const addWrapper = require('../utils/addWrapper.js');
+const isReactComponent = require('./isReactComponent.js');
+const { createIterateUtilFile } = require('./createIterateUtil.js');
+const addWrapper = require('./addWrapper.js');
 const axios = require('axios');
 const { randomUUID } = require('crypto');
 
@@ -16,7 +16,7 @@ class FileProcessor {
     this.isMixpanelTrackerInFile = false;
     this.wrapperArray = [];
     this.components = [];
-    this.events = [];
+    // this.events = [];
 
     try {
       this.code = fs.readFileSync(filePath, 'utf-8');
@@ -44,29 +44,51 @@ class FileProcessor {
     }
   }
 
-  async pushEvents() {
-    if (this.events.length > 0) {
-      try {
-        const modifiedEvents = this.events.map((event) => {
-          if (Object.keys(event.attributes).length === 0) {
-            return { ...event, attributes: null, is_manual: true }; // todo platforms / element_uid / deployment_id
-          }
-          return event;
-        });
-        // todo remove hardcoded platform, element_uid, deployment_id
-        const response = await axios.post('http://localhost:4000/pushevents', {
-          events: modifiedEvents,
-          filePath: this.filePath,
-          platform: 'MIXPANEL',
-          deployment_id: 'testid1234',
-        });
-        console.log(
-          `Events pushed successfully for ${this.filePath}:`,
-          response.data
-        );
-      } catch (error) {
-        console.error(`Error pushing events for ${this.filePath}:`, error);
-      }
+  // async pushEvents() {
+  //   if (this.events.length > 0) {
+  //     try {
+  //       const modifiedEvents = this.events.map((event) => {
+  //         if (Object.keys(event.attributes).length === 0) {
+  //           return { ...event, attributes: null, is_manual: true }; // todo platforms / element_uid / deployment_id
+  //         }
+  //         return event;
+  //       });
+  //       // todo remove hardcoded platform, element_uid, deployment_id
+  //       const response = await axios.post('http://localhost:4000/pushevents', {
+  //         events: modifiedEvents,
+  //         filePath: this.filePath,
+  //         platform: 'MIXPANEL',
+  //         deployment_id: 'testid1234',
+  //       });
+  //       console.log(
+  //         `Events pushed successfully for ${this.filePath}:`,
+  //         response.data
+  //       );
+  //     } catch (error) {
+  //       console.error(`Error pushing events for ${this.filePath}:`, error);
+  //     }
+  //   }
+  // }
+
+  async sendDataIterateObjects() {
+    if (this.wrapperArray.length === 0) {
+      console.log(`No dataiterate objects to send for ${this.filePath}`);
+      return;
+    }
+    try {
+      const response = await axios.post('http://localhost:4000/pushevents', {
+        dataiterate: this.wrapperArray.map((wrapper) => wrapper.dataiterate),
+        filePath: this.filePath,
+      });
+      console.log(
+        `Dataiterate objects pushed successfully for ${this.filePath}:`,
+        response.data
+      );
+    } catch (error) {
+      console.error(
+        `Error pushing dataiterate objects for ${this.filePath}:`,
+        error
+      );
     }
   }
 
@@ -87,8 +109,8 @@ class FileProcessor {
       fs.writeFileSync(this.filePath, modifiedCode);
       console.log(`Processed: ${this.filePath}`);
 
-      // Push events after processing the file
-      await this.pushEvents();
+      // await this.pushEvents();
+      await this.sendDataIterateObjects();
     } catch (error) {
       console.error(`Error processing file ${this.filePath}:`, error);
     }
@@ -114,8 +136,7 @@ class FileProcessor {
             eventAttributes = {};
           }
 
-          // Add the event to the events array
-          this.events.push({ name: eventName, attributes: eventAttributes });
+          // this.events.push({ name: eventName, attributes: eventAttributes });
 
           let jsxOpeningElement = path?.parentPath;
           while (
@@ -293,7 +314,7 @@ class Project {
 
 async function main() {
   try {
-    const project = new Project('../../', '../../');
+    const project = new Project('../flux', '../flux');
     await project.processDirectory();
     createIterateUtilFile(project.sourceCodeDir, project.projectType);
   } catch (error) {
