@@ -70,27 +70,30 @@ class FileProcessor {
   //   }
   // }
 
-  async sendDataIterateObjects() {
-    if (this.wrapperArray.length === 0) {
-      console.log(`No dataiterate objects to send for ${this.filePath}`);
-      return;
-    }
-    try {
-      const response = await axios.post('http://localhost:4000/pushevents', {
-        dataiterate: this.wrapperArray.map((wrapper) => wrapper.dataiterate),
-        filePath: this.filePath,
-      });
-      console.log(
-        `Dataiterate objects pushed successfully for ${this.filePath}:`,
-        response.data
-      );
-    } catch (error) {
-      console.error(
-        `Error pushing dataiterate objects for ${this.filePath}:`,
-        error
-      );
-    }
-  }
+  // async sendDataIterateObjects() {
+  //   if (this.wrapperArray.length === 0) {
+  //     console.log(`No dataiterate objects to send for ${this.filePath}`);
+  //     return;
+  //   }
+  //   try {
+  //     const response = await axios.post('http://localhost:4000/pushevents', {
+  //       elements: this.wrapperArray.map((wrapper) => wrapper.dataiterate),
+  //       // filePath: this.filePath,
+  //       is_manual: false,
+  //       deployment_id: 'f23r43fefg54',
+  //       platforms: 'MIXPANEL',
+  //     });
+  //     console.log(
+  //       `Dataiterate objects pushed successfully for ${this.filePath}:`,
+  //       response.data
+  //     );
+  //   } catch (error) {
+  //     console.error(
+  //       `Error pushing dataiterate objects for ${this.filePath}:`,
+  //       error
+  //     );
+  //   }
+  // }
 
   async processFile() {
     try {
@@ -110,7 +113,7 @@ class FileProcessor {
       console.log(`Processed: ${this.filePath}`);
 
       // await this.pushEvents();
-      await this.sendDataIterateObjects();
+      // await this.sendDataIterateObjects();
     } catch (error) {
       console.error(`Error processing file ${this.filePath}:`, error);
     }
@@ -173,7 +176,12 @@ class FileProcessor {
       traverse(this.ast, visitor);
       this.isMixpanelTrackerInFile &&
         this.components.forEach(
-          ({ jsxOpeningElement, eventName, eventAttributes, isComponent }) => {
+          async ({
+            jsxOpeningElement,
+            eventName,
+            eventAttributes,
+            isComponent,
+          }) => {
             const attributes = jsxOpeningElement.node.attributes;
             let iterateEvents = [];
             const existingEventAttr = attributes.find(
@@ -219,6 +227,26 @@ class FileProcessor {
               };
 
               this.wrapperArray.push(wrapper);
+              try {
+                const response = await axios.post(
+                  'http://localhost:4000/pushevents',
+                  {
+                    dataiterate,
+                    is_manual: false,
+                    deployment_id: 'f23r43fefg54',
+                    platforms: 'MIXPANEL',
+                  }
+                );
+                console.log(
+                  `Dataiterate object pushed successfully for ${this.filePath}:`,
+                  response.data
+                );
+              } catch (error) {
+                console.error(
+                  `Error pushing dataiterate object for ${this.filePath}:`,
+                  error
+                );
+              }
             } else {
               attributes.push(dataIterateEvents);
             }

@@ -28,7 +28,7 @@ function getComponentName(path) {
   }
 }
 
-function processFile(
+async function processFile(
   filePath,
   visitor,
   outputCodeDir,
@@ -64,7 +64,12 @@ function processFile(
   if (traversalStage === 3) {
     let wrapperArray = [];
     components.forEach(
-      ({ jsxOpeningElement, eventName, eventAttributes, isComponent }) => {
+      async ({
+        jsxOpeningElement,
+        eventName,
+        eventAttributes,
+        isComponent,
+      }) => {
         const attributes = jsxOpeningElement.node.attributes;
         let iterateEvents = [];
         const existingEventAttr = attributes.find(
@@ -124,6 +129,26 @@ function processFile(
           };
 
           wrapperArray.push(wrapper);
+          try {
+            const response = await axios.post(
+              'http://localhost:4000/pushevents',
+              {
+                dataiterate,
+                is_manual: false,
+                deployment_id: 'f23r43fefg54',
+                platforms: 'MIXPANEL',
+              }
+            );
+            console.log(
+              `Dataiterate object pushed successfully for ${filePath}:`,
+              response.data
+            );
+          } catch (error) {
+            console.error(
+              `Error pushing dataiterate object for ${filePath}:`,
+              error
+            );
+          }
         } else {
           attributes.push(dataIterateEvents);
         }
@@ -203,7 +228,7 @@ async function traverseDirectory(dir, fileProcessor, outputCodeDir) {
   }
 }
 
-function firstProcessFile(filePath, outputCodeDir) {
+async function firstProcessFile(filePath, outputCodeDir) {
   const visitor = {
     CallExpression(path) {
       if (
@@ -289,10 +314,10 @@ function firstProcessFile(filePath, outputCodeDir) {
       }
     },
   };
-  processFile(filePath, visitor, outputCodeDir, 1);
+  await processFile(filePath, visitor, outputCodeDir, 1);
 }
 
-function secondProcessFile(filePath, outputCodeDir) {
+async function secondProcessFile(filePath, outputCodeDir) {
   const visitor = {
     CallExpression(path) {
       let evName = '',
@@ -396,7 +421,7 @@ function secondProcessFile(filePath, outputCodeDir) {
       }
     },
   };
-  processFile(filePath, visitor, outputCodeDir, 2);
+  await processFile(filePath, visitor, outputCodeDir, 2);
 }
 
 async function thirdProcessFile(filePath, outputCodeDir) {
@@ -480,40 +505,40 @@ async function thirdProcessFile(filePath, outputCodeDir) {
       }
     },
   };
-  processFile(filePath, visitor, outputCodeDir, 3, components);
-  if (fileEvents.length !== 0) {
-    try {
-      const modifiedEvents = fileEvents.map((event) => {
-        if (Object.keys(event.attributes).length === 0) {
-          return { ...event, attributes: null }; // todo platforms
-        }
-        return event;
-      });
+  await processFile(filePath, visitor, outputCodeDir, 3, components);
+  // if (fileEvents.length !== 0) {
+  //   try {
+  //     const modifiedEvents = fileEvents.map((event) => {
+  //       if (Object.keys(event.attributes).length === 0) {
+  //         return { ...event, attributes: null }; // todo platforms
+  //       }
+  //       return event;
+  //     });
 
-      const response = await axios.post('http://localhost:4000/pushevents', {
-        events: modifiedEvents,
-        filePath: filePath,
-        is_manual: false,
-      });
-      console.log(`API request successful for file: ${filePath}`);
-      console.log('Response:', response.data);
-    } catch (error) {
-      console.error(`Error making API request for file: ${filePath}`, error);
-    }
-  } else {
-    console.log(`Skipping API request for file : ${filePath}`);
-  }
+  //     const response = await axios.post('http://localhost:4000/pushevents', {
+  //       events: modifiedEvents,
+  //       filePath: filePath,
+  //       is_manual: false,
+  //     });
+  //     console.log(`API request successful for file: ${filePath}`);
+  //     console.log('Response:', response.data);
+  //   } catch (error) {
+  //     console.error(`Error making API request for file: ${filePath}`, error);
+  //   }
+  // } else {
+  //   console.log(`Skipping API request for file : ${filePath}`);
+  // }
 }
 
 async function executeTraversal(sourceCodeDir, outputCodeDir) {
   ensureOutputDirectory(outputCodeDir);
 
   console.log('Executing First Traversal...');
-  traverseDirectory(sourceCodeDir, firstProcessFile, outputCodeDir);
+  await traverseDirectory(sourceCodeDir, firstProcessFile, outputCodeDir);
   console.log('First Traversal done');
 
   console.log('Executing Second Traversal...');
-  traverseDirectory(sourceCodeDir, secondProcessFile, outputCodeDir);
+  await traverseDirectory(sourceCodeDir, secondProcessFile, outputCodeDir);
   console.log('Second Traversal done');
 
   console.log('Executing Third Traversal...');
